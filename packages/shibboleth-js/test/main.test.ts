@@ -1,11 +1,11 @@
+import { defaultAbiCoder } from '@ethersproject/abi';
 import { keccak256 as solidityKeccak256 } from '@ethersproject/solidity';
 import { arrayify, BytesLike, concat, hexlify } from '@ethersproject/bytes';
 import { randomBytes } from '@ethersproject/random';
 import { SigningKey } from '@ethersproject/signing-key';
 import { computeAddress, recoverAddress } from '@ethersproject/transactions';
-import { NonceIssuer } from '@shibboleth/issuer-js';
+import { NonceIssuer, buildClaim } from '../src';
 import { keccak256 } from '@ethersproject/keccak256';
-import { buildClaim } from '../src';
 
 const TEST_ADDRESS = "0x0123456789012345678901234567890123456789";
 const TEST_ADDRESS_2 = "0xabcdef0123abcdef0123abcdef0123abcdef0123";
@@ -21,6 +21,28 @@ function expandSignature(sig: BytesLike) {
     return concat([bytes, [v]]);
 }
 
+describe('NonceIssuer', () => {
+    it('issues valid claim codes', () => {
+        const privateKey = new SigningKey(randomBytes(32));
+        const issuer = new NonceIssuer(TEST_ADDRESS, privateKey, 0);
+        for(let i = 0; i < 5; i++) {
+            expect(issuer.nonce).toEqual(i);
+            const claimCode = issuer.makeClaimCode();
+            
+            expect(claimCode.validator).toEqual(TEST_ADDRESS);
+            expect(hexlify(claimCode.data)).toEqual(defaultAbiCoder.encode(['uint64'], [i]));
+            
+            const claimantaddress = computeAddress(claimCode.claimkey);
+            const authhash = solidityKeccak256(
+                ['bytes', 'address', 'bytes', 'bytes32', 'address'],
+                ['0x1900', TEST_ADDRESS, '0x00', keccak256(claimCode.data), claimantaddress]
+            );
+            const signeraddress = recoverAddress(authhash, expandSignature(claimCode.authsig));
+            expect(hexlify(signeraddress)).toEqual(hexlify(computeAddress(privateKey.privateKey)));
+        }
+    });
+});
+
 describe('buildClaim', () => {
     it('converts a claim code to a valid claim', () => {
         // Create a new issuer
@@ -35,7 +57,7 @@ describe('buildClaim', () => {
         const claimantaddress = computeAddress(claimCode.claimkey);
 
         // Convert the claim code into a claim benefiting TEST_ADDRESS_2
-        const claimArgs = buildClaim(TEST_ADDRESS, TEST_ADDRESS_2, claimCode.data, claimCode.authsig, claimCode.claimkey);
+        const claimArgs = buildClaim(TEST_ADDRESS_2, claimCode);
 
         // Check the beneficiary and data are correct
         expect(hexlify(claimArgs[0])).toEqual(TEST_ADDRESS_2);
