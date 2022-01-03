@@ -4,7 +4,7 @@ import { arrayify, BytesLike, concat, hexlify } from '@ethersproject/bytes';
 import { randomBytes } from '@ethersproject/random';
 import { SigningKey } from '@ethersproject/signing-key';
 import { computeAddress, recoverAddress } from '@ethersproject/transactions';
-import { NonceIssuer, buildClaim } from '../src';
+import { NonceIssuer, buildClaim, ClaimCode } from '../src';
 import { keccak256 } from '@ethersproject/keccak256';
 
 const TEST_ADDRESS = "0x0123456789012345678901234567890123456789";
@@ -28,6 +28,7 @@ describe('NonceIssuer', () => {
         for(let i = 0; i < 5; i++) {
             expect(issuer.nonce).toEqual(i);
             const claimCode = issuer.makeClaimCode();
+            console.log(claimCode.toString());
             
             expect(claimCode.validator).toEqual(TEST_ADDRESS);
             expect(hexlify(claimCode.data)).toEqual(defaultAbiCoder.encode(['uint64'], [i]));
@@ -51,7 +52,8 @@ describe('buildClaim', () => {
         const issuer = new NonceIssuer(TEST_ADDRESS, issuerkey, 0);
 
         // Get a claim code
-        const claimCode = issuer.makeClaimCode();
+        const claimCodeString = issuer.makeClaimCode().toString();
+        const claimCode = ClaimCode.fromString(claimCodeString);
 
         // Figure out the address for the ephemeral claimant key
         const claimantaddress = computeAddress(claimCode.claimkey);
