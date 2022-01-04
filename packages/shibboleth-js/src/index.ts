@@ -14,7 +14,7 @@ import { Logger } from '@ethersproject/logger';
 
 const logger = new Logger("shibboleth-js/0.1.0");
 
-function rleZeroes(data: Uint8Array): Uint8Array {
+function rleZeros(data: Uint8Array): Uint8Array {
     const bytes = [];
     let count = 0;
     for(let i = 0; i < data.length; i++) {
@@ -22,28 +22,29 @@ function rleZeroes(data: Uint8Array): Uint8Array {
         if(ch == 0) {
             count += 1;
             if(count == 256) {
-                bytes.push(0);
-                bytes.push(count - 1);
+                bytes.push(0, count - 1);
                 count = 0;
             }
         } else {
             if(count > 0) {
-                bytes.push(0);
-                bytes.push(count - 1);
+                bytes.push(0, count - 1);
                 count = 0;
             }
             bytes.push(ch);
         }
     }
+    if(count > 0) {
+        bytes.push(0, count - 1);
+    }
     return Uint8Array.from(bytes);
 }
 
-function unrleZeroes(data: Uint8Array): Uint8Array {
+function unrleZeros(data: Uint8Array): Uint8Array {
     const bytes = [];
     for(let i = 0; i < data.length; i++) {
         const ch = data[i];
         if(ch == 0) {
-            bytes.push(...new Array(data[++i]).fill(0));
+            bytes.push(...new Array(data[++i] + 1).fill(0));
         } else {
             bytes.push(ch);
         }
@@ -72,12 +73,12 @@ export class ClaimCode {
         const validator = hexlify(dataArray.slice(0, 20));
         const claimkey = dataArray.slice(20, 52);
         const authsig = dataArray.slice(52, 116);
-        const data = unrleZeroes(dataArray.slice(116));
+        const data = unrleZeros(dataArray.slice(116));
         return new ClaimCode(validator, claimkey, authsig, data);
     }
 
     toString(): string {
-        return Base32.encode(concat([this.validator, this.claimkey, this.authsig, rleZeroes(this.data)])).toUpperCase();
+        return Base32.encode(concat([this.validator, this.claimkey, this.authsig, rleZeros(this.data)])).toUpperCase();
     }
 }
 
@@ -102,6 +103,15 @@ export abstract class AbstractIssuer {
     }
 }
 
+export enum ClaimType {
+    CLAIM = 0x00,
+    CONFIG = 0x80
+}
+
+/**
+ * Implements an issuer with a request type byte (config or claim) and a nonce field.
+ * Intended to be used in conjunction with the ValidatorRegistry and an executor that supports nonces.
+ */
 export class NonceIssuer extends AbstractIssuer {
     nonce: number;
 
@@ -110,9 +120,13 @@ export class NonceIssuer extends AbstractIssuer {
         this.nonce = nonce;
     }
 
-    makeClaimCode(): ClaimCode {
-        const data = defaultAbiCoder.encode(['uint64'], [this.nonce++]);
+    makeClaimCode(claimType: ClaimType = ClaimType.CLAIM): ClaimCode {
+        const data = concat([[claimType], defaultAbiCoder.encode(['uint64'], [this.nonce++])]);
         return this._makeClaimCode(data);
+    }
+
+    makeConfigCode(): ClaimCode {
+        return this.makeClaimCode(ClaimType.CONFIG);
     }
 }
 

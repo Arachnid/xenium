@@ -22,16 +22,15 @@ function expandSignature(sig: BytesLike) {
 }
 
 describe('NonceIssuer', () => {
-    it('issues valid claim codes', () => {
+    it('issues valid claim and config codes', () => {
         const privateKey = new SigningKey(randomBytes(32));
         const issuer = new NonceIssuer(TEST_ADDRESS, privateKey, 0);
         for(let i = 0; i < 5; i++) {
             expect(issuer.nonce).toEqual(i);
-            const claimCode = issuer.makeClaimCode();
-            console.log(claimCode.toString());
+            const claimCode = i%2==0 ? issuer.makeClaimCode() : issuer.makeConfigCode();
             
             expect(claimCode.validator).toEqual(TEST_ADDRESS);
-            expect(hexlify(claimCode.data)).toEqual(defaultAbiCoder.encode(['uint64'], [i]));
+            expect(hexlify(claimCode.data)).toEqual(hexlify(concat([i%2==0 ? '0x00' : '0x01', defaultAbiCoder.encode(['uint64'], [i])])));
             
             const claimantaddress = computeAddress(claimCode.claimkey);
             const authhash = solidityKeccak256(
