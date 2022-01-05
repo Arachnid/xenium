@@ -16,11 +16,12 @@ interface IExecutor is IERC165 {
      *      was called by a registry they recognise, and that any conditions in claimData such as replay protection are met
      *      before acting on the request.
      * @param issuer The account that issued the claim.
+     * @param claimant The account that is entitled to make the claim.
      * @param beneficiary The account that the claim should benefit.
      * @param claimData Claim data provided by the issuer.
      * @param executorData Contextual information stored on the ValidatorRegistry for this issuer.
      */
-    function executeClaim(address issuer, address beneficiary, bytes calldata claimData, bytes calldata executorData) external;
+    function executeClaim(address issuer, address claimant, address beneficiary, bytes calldata claimData, bytes calldata executorData) external;
 
     /**
      * @dev Returns metadata explaining a claim.

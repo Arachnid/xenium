@@ -49,11 +49,11 @@ contract ValidatorRegistry is IValidator, ERC165 {
         if(data.length == 0) {
             revert InvalidRequest();
         }
-        address issuer = ValidatorLib.validate(address(this), beneficiary, data, authsig, claimsig);
+        (address issuer, address claimant) = ValidatorLib.validate(address(this), beneficiary, data, authsig, claimsig);
         if(data[0] == CLAIM_REQUEST) {
-            doClaim(issuer, beneficiary, data);
+          doClaim(issuer, claimant, beneficiary, data);
         } else if(data[0] == CONFIG_REQUEST) {
-            doConfigure(issuer, beneficiary, data);
+          doConfigure(issuer, claimant, beneficiary, data);
         } else {
             revert InvalidClaimType(uint8(data[0]));
         }
@@ -124,15 +124,15 @@ contract ValidatorRegistry is IValidator, ERC165 {
         return interfaceId == type(IValidator).interfaceId || super.supportsInterface(interfaceId);
     }
 
-    function doClaim(address issuer, address beneficiary, bytes calldata data) internal {
+    function doClaim(address issuer, address claimant, address beneficiary, bytes calldata data) internal {
         Configuration memory config = configs[issuer];
         if(address(config.executor) == address(0)) {
             revert NotConfigured();
         }
-        config.executor.executeClaim(issuer, beneficiary, data[1:], config.data);
+        config.executor.executeClaim(issuer, claimant, beneficiary, data[1:], config.data);
     }
 
-    function doConfigure(address issuer, address beneficiary, bytes calldata data) internal {
+    function doConfigure(address issuer, address /*claimant*/, address beneficiary, bytes calldata data) internal {
         if(data.length != 33) {
             revert InvalidRequest();
         }
