@@ -43,7 +43,7 @@ describe('ERC20Executor', () => {
             const executorData = '0x';
             const tx = await executor.executeClaim(signers[0].address, signers[1].address, claimData, executorData);
             const receipt = await tx.wait();
-            //expect(receipt.events.length).to.equal(1);
+            expect(receipt.events.length).to.equal(3);
             expect(receipt.events[2].event).to.equal('ClaimedERC20');
             const args = receipt.events[2].args;
             expect(args.issuer).to.equal(signers[0].address);
@@ -58,35 +58,25 @@ describe('ERC20Executor', () => {
             
         });
 
-        // it('only allows calls from the validator', async () => {
-        //     const claimData = defaultAbiCoder.encode(['uint64'], [0]);
-        //     const executorData = '0x';
-        //     await expect(executor.connect(signers[1]).executeClaim(signers[0].address, signers[1].address, claimData, executorData)).to.be.reverted;
-        // });
+        it('only allows calls from the validator', async () => {
+            const amount = balance
+ 	          const expiration = 11234234223
+            const claimData = defaultAbiCoder.encode(
+                ['address', 'address', 'uint256', 'uint256'], [signers[0].address, token.address, amount, expiration]
+            );
+            const executorData = '0x';
+            await expect(executor.connect(signers[1]).executeClaim(signers[0].address, signers[1].address, claimData, executorData)).to.be.reverted;
+        });
 
-        // it('allows skipping nonces', async () => {
-        //     const claimData = defaultAbiCoder.encode(['uint64'], [1]);
-        //     const executorData = '0x';
-        //     const tx = await executor.executeClaim(signers[0].address, signers[1].address, claimData, executorData);
-        //     const receipt = await tx.wait();
-        //     expect(receipt.events.length).to.equal(1);
-        //     expect(receipt.events[0].event).to.equal('Claimed');
-        // });
+        it('reverts if the deadline has passed', async () => {
+            const amount = balance
+ 	          const expiration = 1438251133
+            const claimData = defaultAbiCoder.encode(
+                ['address', 'address', 'uint256', 'uint256'], [signers[0].address, token.address, amount, expiration]
+            );
+            const executorData = '0x';
 
-        // it('reverts if the nonce is too low', async () => {
-        //     const claimData = defaultAbiCoder.encode(['uint64'], [0]);
-        //     const executorData = '0x';
-        //     const tx = await executor.executeClaim(signers[0].address, signers[1].address, claimData, executorData);
-        //     const receipt = await tx.wait();
-        //     expect(receipt.events.length).to.equal(1);
-        //     expect(receipt.events[0].event).to.equal('Claimed');
-        //     await expect(executor.executeClaim(signers[0].address, signers[1].address, claimData, executorData)).to.be.reverted;
-        // });
-
-        // it('reverts if no nonce is provided', async () => {
-        //     const claimData = '0x';
-        //     const executorData = '0x';
-        //     await expect(executor.executeClaim(signers[0].address, signers[1].address, claimData, executorData)).to.be.reverted;
-        // });
+            await expect(executor.executeClaim(signers[0].address, signers[1].address, claimData, executorData)).to.be.reverted;
+        });
     });
 });
