@@ -85,7 +85,6 @@ describe('HighestNonceExecutor', () => {
         it('returns valid metadata', async () => {
             const claimData = defaultAbiCoder.encode(['uint64'], [0]);
             const executorData = '0x';
-            const claimant = signers[3].address
             const metadata = parseMetadata(await executor.metadata(signers[0].address, claimData, executorData));
             expect(metadata.valid).to.be.true;
         });
