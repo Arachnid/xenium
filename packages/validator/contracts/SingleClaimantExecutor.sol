@@ -8,14 +8,13 @@ import "@openzeppelin/contracts/contracts/utils/Base64.sol";
 /**
  * @dev An abstract implementation of an Executor that only allows claims with unique clamaints. 
  *      To use, subclass and override `executeClaim` and `metadata`, being sure to call `super` inside `executeClaim` before doing anything else.
- *      This executor expects the first 32 bytes of `claimData` to be the nonce; you may optionally use extra data for your own purposes.
  */
 abstract contract SingleClaimantExecutor is BaseExecutor {
 
     // claimant -> beneficiary
     mapping (address => address) public claimants;
     
-    error UsedClaimant();
+    error AlreadyClaimed();
 
     constructor(address _validator) BaseExecutor(_validator) { }
 
@@ -34,17 +33,8 @@ abstract contract SingleClaimantExecutor is BaseExecutor {
 
         // if claimant was already used
         if(claimants[claimant] != address(0)) {
-            revert UsedClaimant();
+            revert AlreadyClaimed();
         }
         claimants[claimant] = beneficiary;
-    }
-
-    /**
-     * @dev Returns metadata explaining a claim. Subclasses should call this first and return it if it is nonempty.
-     * @return A URL that resolves to JSON metadata as described in the spec.
-     *         Callers must support at least 'data' and 'https' schemes.
-     */
-    function metadata(address /*issuer*/, bytes calldata /*claimData*/, bytes calldata /*executorData*/) public override virtual view returns(string memory) {
-        return "";
     }    
 }

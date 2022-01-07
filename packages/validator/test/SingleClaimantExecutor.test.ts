@@ -63,15 +63,5 @@ describe('SingleClaimantExecutor', () => {
             const claimData2 = defaultAbiCoder.encode(['uint64'], [1]);            
             await expect(executor.executeClaim(signers[0].address, claimant, signers[1].address, claimData2, executorData)).to.be.reverted;
         });
-    });
-
-    describe('metadata()', () => {
-        it('returns valid metadata', async () => {
-            const claimData = defaultAbiCoder.encode(['uint64'], [0]);
-            const executorData = '0x';
-            const claimant = signers[3].address
-            const metadata = parseMetadata(await executor.metadata(signers[0].address, claimData, executorData));
-            expect(metadata.valid).to.be.true;
-        });
-    });
+    });    
 });
