@@ -48,9 +48,8 @@ describe('ERC20Executor', () => {
             const claimData = defaultAbiCoder.encode(
                 ['address', 'address', 'uint256', 'uint256'], [signers[0].address, token.address, amount, expiration]
             );
-            const executorData = '0x';
             const claimant = signers[3].address
-            const tx = await executor.executeClaim(signers[0].address, claimant, signers[1].address, claimData, executorData);
+            const tx = await executor.executeClaim(signers[0].address, claimant, signers[1].address, claimData);
             const receipt = await tx.wait();
             expect(receipt.events.length).to.equal(3);
             expect(receipt.events[2].event).to.equal('ClaimedERC20');
@@ -72,14 +71,13 @@ describe('ERC20Executor', () => {
             const claimData = defaultAbiCoder.encode(
                 ['address', 'address', 'uint256', 'uint256'], [signers[0].address, token.address, amount, expiration]
             );
-            const executorData = '0x';
             const claimant = signers[3].address
 
             // first claim should pass
-            await executor.executeClaim(signers[0].address, claimant, signers[1].address, claimData, executorData);
+            await executor.executeClaim(signers[0].address, claimant, signers[1].address, claimData);
 
             // second claim should revert
-            await expect(executor.executeClaim(signers[0].address, claimant, signers[1].address, claimData, executorData)).to.be.reverted;
+            await expect(executor.executeClaim(signers[0].address, claimant, signers[1].address, claimData)).to.be.reverted;
         });
 
         it('only allows calls from the validator', async () => {
@@ -88,9 +86,8 @@ describe('ERC20Executor', () => {
             const claimData = defaultAbiCoder.encode(
                 ['address', 'address', 'uint256', 'uint256'], [signers[0].address, token.address, amount, expiration]
             );
-            const executorData = '0x';
             const claimant = signers[3].address
-            await expect(executor.connect(signers[1]).executeClaim(signers[0].address, claimant, signers[1].address, claimData, executorData)).to.be.reverted;
+            await expect(executor.connect(signers[1]).executeClaim(signers[0].address, claimant, signers[1].address, claimData)).to.be.reverted;
         });
 
         it('reverts if the deadline has passed', async () => {
@@ -99,9 +96,8 @@ describe('ERC20Executor', () => {
             const claimData = defaultAbiCoder.encode(
                 ['address', 'address', 'uint256', 'uint256'], [signers[0].address, token.address, amount, expiration]
             );
-            const executorData = '0x';
             const claimant = signers[3].address
-            await expect(executor.executeClaim(signers[0].address, claimant, signers[1].address, claimData, executorData)).to.be.reverted;
+            await expect(executor.executeClaim(signers[0].address, claimant, signers[1].address, claimData)).to.be.reverted;
         });
     });
 
@@ -112,9 +108,8 @@ describe('ERC20Executor', () => {
             const claimData = defaultAbiCoder.encode(
                 ['address', 'address', 'uint256', 'uint256'], [signers[0].address, token.address, amount, expiration]
             );
-            const executorData = '0x';
             const claimant = signers[3].address
-            const metadata = parseMetadata(await executor.metadata(signers[0].address, claimant, claimData, executorData));
+            const metadata = parseMetadata(await executor.metadata(signers[0].address, claimant, claimData));
             expect(metadata.valid).to.be.true;
         });
 
@@ -124,11 +119,10 @@ describe('ERC20Executor', () => {
             const claimData = defaultAbiCoder.encode(
                 ['address', 'address', 'uint256', 'uint256'], [signers[0].address, token.address, amount, expiration]
             );
-            const executorData = '0x';
             const claimant = signers[3].address
-            const tx = await executor.executeClaim(signers[0].address, claimant, signers[1].address, claimData, executorData);
+            const tx = await executor.executeClaim(signers[0].address, claimant, signers[1].address, claimData);
             await tx.wait();
-            const metadata = parseMetadata(await executor.metadata(signers[0].address, claimant, claimData, executorData));
+            const metadata = parseMetadata(await executor.metadata(signers[0].address, claimant, claimData));
             expect(metadata.valid).to.be.false;
         });
 
@@ -138,9 +132,8 @@ describe('ERC20Executor', () => {
             const claimData = defaultAbiCoder.encode(
                 ['address', 'address', 'uint256', 'uint256'], [signers[0].address, token.address, amount, expiration]
             );
-            const executorData = '0x';
             const claimant = signers[3].address
-            const metadata = parseMetadata(await executor.metadata(signers[0].address, claimant, claimData, executorData));
+            const metadata = parseMetadata(await executor.metadata(signers[0].address, claimant, claimData));
             expect(metadata.valid).to.be.false;
         });
     });

@@ -18,10 +18,9 @@ contract TestERC20Executor is ERC20Executor {
      * @param claimant The account that is entitled to make the claim.
      * @param beneficiary The account that the claim should benefit.
      * @param claimData Claim data provided by the issuer.
-     * @param executorData Contextual information stored on the ValidatorRegistry for this issuer.
      */
-    function executeClaim(address issuer, address claimant, address beneficiary, bytes calldata claimData, bytes calldata executorData) public override {
-        super.executeClaim(issuer, claimant, beneficiary, claimData, executorData);
+    function executeClaim(address issuer, address claimant, address beneficiary, bytes calldata claimData) public override {
+        super.executeClaim(issuer, claimant, beneficiary, claimData);
     }
 
     
@@ -31,12 +30,11 @@ contract TestERC20Executor is ERC20Executor {
      * @param issuer The address of the issuer.
      * @param claimant The account that is entitled to make the claim.
      * @param claimData Claim data provided by the issuer.
-     * @param executorData Contextual information stored on the ValidatorRegistry for this issuer.
      * @return A URL that resolves to JSON metadata as described in the spec.
      *         Callers must support at least 'data' and 'https' schemes.
      */
-    function metadata(address issuer, address claimant, bytes calldata claimData, bytes calldata executorData) public override virtual view returns(string memory) {
-        string memory ret = super.metadata(issuer, claimant, claimData, executorData);
+    function metadata(address issuer, address claimant, bytes calldata claimData) public override virtual view returns(string memory) {
+        string memory ret = super.metadata(issuer, claimant, claimData);
         if(bytes(ret).length > 0) {
             return ret;
         }
