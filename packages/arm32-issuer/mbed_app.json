@@ -1,0 +1,13 @@
+{
+    "target_overrides": {
+        "*": {
+            "storage.storage_type": "TDB_INTERNAL",
+            "storage_tdb_internal.internal_size": "0x1000",
+            "target.components_add": ["FLASHIAP"],
+            "target.clock_source": "USE_PLL_MSI",
+            "platform.callback-nontrivial": true,
+            "events.shared-stacksize": 8192
+        }
+    },
+    "macros": ["uECC_CURVE=uECC_secp256k1"]
+}
