@@ -114,6 +114,7 @@ contract ValidatorRegistry is IValidator, ERC165 {
             revert NotAuthorised();
         }
         executors[issuer] = IExecutor(executor);
+        IExecutor(executor).configure(issuer, owners[issuer].owner, data);
         emit ConfigurationUpdated(issuer, executor, data);
     }
 
