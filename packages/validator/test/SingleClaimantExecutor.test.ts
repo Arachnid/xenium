@@ -60,8 +60,28 @@ describe('SingleClaimantExecutor', () => {
             const executorData = '0x';
             const claimant = signers[3].address
             const tx = await executor.executeClaim(signers[0].address, claimant, signers[1].address, claimData, executorData);
-            const claimData2 = defaultAbiCoder.encode(['uint64'], [1]);            
+            const claimData2 = defaultAbiCoder.encode(['uint64'], [1]);
             await expect(executor.executeClaim(signers[0].address, claimant, signers[1].address, claimData2, executorData)).to.be.reverted;
         });
-    });    
+    });
+
+    describe('metadata()', () => {
+        it('returns valid metadata', async () => {
+            const claimData = '0x';
+            const executorData = '0x';
+            const claimant = signers[3].address
+            const metadata = parseMetadata(await executor.metadata(signers[0].address, claimant, claimData, executorData));
+            expect(metadata.valid).to.be.true;
+        });
+
+        it('returns an error in the metadata if the claimant was already used', async () => {
+            const claimData = '0x';
+            const executorData = '0x';
+            const claimant = signers[3].address
+            const tx = await executor.executeClaim(signers[0].address, claimant, signers[1].address, claimData, executorData);
+            await tx.wait();
+            const metadata = parseMetadata(await executor.metadata(signers[0].address, claimant, claimData, executorData));
+            expect(metadata.valid).to.be.false;
+        });
+    });
 });
