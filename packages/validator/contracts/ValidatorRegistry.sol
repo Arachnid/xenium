@@ -55,7 +55,7 @@ contract ValidatorRegistry is IValidator, ERC165 {
         emit ClaimExecuted(issuer, beneficiary, data, authsig, claimsig);
         return issuer;
     }
-    
+
     /**
      * @dev Returns metadata explaining a claim.
      * @param issuer The address of the issuer.
