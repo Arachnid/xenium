@@ -24,12 +24,13 @@ abstract contract ERC20Executor is BaseExecutor {
      *      was called by a registry they recognise, and that any conditions in claimData such as replay protection are met
      *      before acting on the request.
      * @param issuer The account that issued the claim.
+     * @param claimant The account that is entitled to make the claim.
      * @param beneficiary The account that the claim should benefit.
      * @param claimData Claim data provided by the issuer.
      * @param executorData Contextual information stored on the ValidatorRegistry for this issuer.
      */
-    function executeClaim(address issuer, address beneficiary, bytes calldata claimData, bytes calldata executorData) public virtual override {
-        super.executeClaim(issuer, beneficiary, claimData, executorData);
+    function executeClaim(address issuer, address claimant, address beneficiary, bytes calldata claimData, bytes calldata executorData) public virtual override {
+        super.executeClaim(issuer, claimant, beneficiary, claimData, executorData);
         (
          address from,
          address token,
@@ -50,7 +51,7 @@ abstract contract ERC20Executor is BaseExecutor {
      * @return A URL that resolves to JSON metadata as described in the spec.
      *         Callers must support at least 'data' and 'https' schemes.
      */
-    function metadata(address /*issuer*/, bytes calldata claimData, bytes calldata /*executorData*/) public override virtual view returns(string memory) {
+    function metadata(address /*issuer*/, address /*claimant*/, bytes calldata claimData, bytes calldata /*executorData*/) public override virtual view returns(string memory) {
         /* uint64 claimNonce = abi.decode(claimData, (uint64)); */
         /* if(claimNonce < nonce) { */
         /*     return string(abi.encodePacked( */
