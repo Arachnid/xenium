@@ -1,24 +1,21 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "./BaseExecutor.sol";
+import "./SingleClaimantExecutor.sol";
 import "@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol";
-/* import "@openzeppelin/contracts/contracts/utils/introspection/ERC165.sol"; */
-/* import "@openzeppelin/contracts/contracts/utils/Base64.sol"; */
 
 /**
  * @dev An abstract implementation of an Executor that only allows claims that have a higher nonce than previously seen to execute.
  *      To use, subclass and override `executeClaim` and `metadata`, being sure to call `super` inside `executeClaim` before doing anything else.
  *      This executor expects the first 32 bytes of `claimData` to be the nonce; you may optionally use extra data for your own purposes.
  */
-abstract contract ERC20Executor is BaseExecutor {
-  event ClaimedERC20(address issuer, address from, address beneficiary, address token, uint256 amount, uint256 expiration);  
-    // uint64 public nonce;
-
+abstract contract ERC20Executor is SingleClaimantExecutor {
+    event ClaimedERC20(address issuer, address from, address beneficiary, address token, uint256 amount, uint256 expiration);
+    
     error ClaimCodeExpired();
 
-    constructor(address _validator) BaseExecutor(_validator) { }
-
+    constructor(address _validator) SingleClaimantExecutor(_validator) { }
+  
     /**
      * @dev Executes a claim that has been verified by the `ValidatorRegistry`. Implementers must check that this function
      *      was called by a registry they recognise, and that any conditions in claimData such as replay protection are met
@@ -51,7 +48,7 @@ abstract contract ERC20Executor is BaseExecutor {
      * @return A URL that resolves to JSON metadata as described in the spec.
      *         Callers must support at least 'data' and 'https' schemes.
      */
-    function metadata(address /*issuer*/, address /*claimant*/, bytes calldata claimData, bytes calldata /*executorData*/) public override virtual view returns(string memory) {
+     function metadata(address /*issuer*/, address /*claimant*/, bytes calldata claimData, bytes calldata /*executorData*/) public override virtual view returns(string memory) {
         /* uint64 claimNonce = abi.decode(claimData, (uint64)); */
         /* if(claimNonce < nonce) { */
         /*     return string(abi.encodePacked( */
