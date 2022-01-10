@@ -176,7 +176,6 @@ describe('ValidatorRegistry', () => {
             await tx2.wait();
 
             const claimcode = issuer.makeClaimCode();
-
             const metadata = parseMetadata(await validator.metadata(issueraddress, claimcode.claimant, claimcode.data));
             expect(metadata.valid).to.be.true;
             expect(metadata.data.title).to.equal('Emit an event');
