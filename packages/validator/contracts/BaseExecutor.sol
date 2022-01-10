@@ -19,7 +19,7 @@ abstract contract BaseExecutor is IExecutor, ERC165 {
         validator = _validator;
     }
 
-    function executeClaim(address /*issuer*/, address /*beneficiary*/, bytes calldata /*claimData*/, bytes calldata /*executorData*/) public virtual override {
+    function executeClaim(address /*issuer*/, address /*claimant*/, address /*beneficiary*/, bytes calldata /*claimData*/, bytes calldata /*executorData*/) public virtual override {
         if(msg.sender != validator) {
             revert NotAuthorisedError();
         }
@@ -29,7 +29,7 @@ abstract contract BaseExecutor is IExecutor, ERC165 {
         return interfaceId == type(IExecutor).interfaceId || super.supportsInterface(interfaceId);
     }
 
-    function metadata(address /*issuer*/, bytes calldata /*claimData*/, bytes calldata /*executorData*/) public override virtual view returns(string memory) {
+    function metadata(address /*issuer*/, address /*claimant*/, bytes calldata /*claimData*/, bytes calldata /*executorData*/) public override virtual view returns(string memory) {
         revert NotImplementedError();
     }
 }

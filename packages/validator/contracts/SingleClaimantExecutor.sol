@@ -6,14 +6,15 @@ import "@openzeppelin/contracts/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/contracts/utils/Base64.sol";
 
 /**
- * @dev An abstract implementation of an Executor that only allows claims that have a higher nonce than previously seen to execute.
+ * @dev An abstract implementation of an Executor that only allows claims with unique clamaints. 
  *      To use, subclass and override `executeClaim` and `metadata`, being sure to call `super` inside `executeClaim` before doing anything else.
- *      This executor expects the first 32 bytes of `claimData` to be the nonce; you may optionally use extra data for your own purposes.
  */
-abstract contract HighestNonceExecutor is BaseExecutor {
-    uint64 public nonce;
+abstract contract SingleClaimantExecutor is BaseExecutor {
 
-    error NonceTooLow();
+    // claimant -> beneficiary
+    mapping (address => address) public claimants;
+    
+    error AlreadyClaimed();
 
     constructor(address _validator) BaseExecutor(_validator) { }
 
@@ -29,27 +30,27 @@ abstract contract HighestNonceExecutor is BaseExecutor {
      */
     function executeClaim(address issuer, address claimant, address beneficiary, bytes calldata claimData, bytes calldata executorData) public virtual override {
         super.executeClaim(issuer, claimant, beneficiary, claimData, executorData);
-        uint64 claimNonce = abi.decode(claimData, (uint64));
-        if(claimNonce < nonce) {
-            revert NonceTooLow();
+
+        // if claimant was already used
+        if(claimants[claimant] != address(0)) {
+            revert AlreadyClaimed();
         }
-        nonce = claimNonce + 1;
+        claimants[claimant] = beneficiary;
     }
 
     /**
      * @dev Returns metadata explaining a claim. Subclasses should call this first and return it if it is nonempty.
-     * @param claimData Claim data provided by the issuer.
+     * @param claimant The account that is entitled to make the claim.
      * @return A URL that resolves to JSON metadata as described in the spec.
      *         Callers must support at least 'data' and 'https' schemes.
      */
-    function metadata(address /*issuer*/, address /*claimaint*/, bytes calldata claimData, bytes calldata /*executorData*/) public override virtual view returns(string memory) {
-        uint64 claimNonce = abi.decode(claimData, (uint64));
-        if(claimNonce < nonce) {
-            return string(abi.encodePacked(
-                "data:application/json;base64,",
-                Base64.encode("{\"valid\":false,\"error\":\"Nonce too low.\"}")
-            ));
-        }
-        return "";
-    }
+    function metadata(address /*issuer*/, address claimant, bytes calldata /*claimData*/, bytes calldata /*executorData*/) public override virtual view returns(string memory) {
+      if(claimants[claimant] != address(0)) {
+        return string(abi.encodePacked(
+                                       "data:application/json;base64,",
+                                       Base64.encode("{\"valid\":false,\"error\":\"Code already claimed..\"}")
+                                       ));
+      }
+      return "";
+    }    
 }

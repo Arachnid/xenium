@@ -54,31 +54,35 @@ function unrleZeros(data: Uint8Array): Uint8Array {
 
 export class ClaimCode {
     readonly validator: string;
+    readonly claimseed: Uint8Array;
     readonly claimkey: Uint8Array;
+    readonly claimant: string;
     readonly authsig: Uint8Array;
     readonly data: Uint8Array;
 
-    constructor(validator: string, claimkey: BytesLike, authsig: BytesLike, data: BytesLike) {
+    constructor(validator: string, claimseed: BytesLike, authsig: BytesLike, data: BytesLike) {
         this.validator = validator;
-        this.claimkey = arrayify(claimkey);
+        this.claimseed = arrayify(claimseed);
+        this.claimkey = arrayify(keccak256(claimseed));
+        this.claimant = computeAddress(this.claimkey);
         this.authsig = arrayify(authsig);
         this.data = arrayify(data);
     }
 
     static fromString(str: string): ClaimCode {
         const dataArray = Base32.decode(str.toLowerCase());
-        if(dataArray.length < 116) {
+        if(dataArray.length < 100) {
             return logger.throwError("Claim code too short", Logger.errors.INVALID_ARGUMENT, {length: dataArray.length});
         }
         const validator = hexlify(dataArray.slice(0, 20));
-        const claimkey = dataArray.slice(20, 52);
-        const authsig = dataArray.slice(52, 116);
-        const data = unrleZeros(dataArray.slice(116));
-        return new ClaimCode(validator, claimkey, authsig, data);
+        const claimseed = dataArray.slice(20, 36);
+        const authsig = dataArray.slice(36, 100);
+        const data = unrleZeros(dataArray.slice(100));
+        return new ClaimCode(validator, claimseed, authsig, data);
     }
 
     toString(): string {
-        return Base32.encode(concat([this.validator, this.claimkey, this.authsig, rleZeros(this.data)])).toUpperCase();
+        return Base32.encode(concat([this.validator, this.claimseed, this.authsig, rleZeros(this.data)])).toUpperCase();
     }
 }
 
@@ -92,14 +96,15 @@ export abstract class AbstractIssuer {
     }
 
     protected _makeClaimCode(data: BytesLike): ClaimCode {
-        const claimkey = randomBytes(32);
+        const claimseed = randomBytes(16);
+        const claimkey = keccak256(claimseed);
         const claimantaddress = computeAddress(claimkey);
         const authhash = solidityKeccak256(
             ['bytes', 'address', 'bytes', 'bytes32', 'address'],
             ['0x1900', this.validator, '0x00', keccak256(data), claimantaddress]
         );
         const authsig = this.privateKey.signDigest(authhash);
-        return new ClaimCode(this.validator, claimkey, concat([authsig.r, authsig._vs]), data);
+        return new ClaimCode(this.validator, claimseed, concat([authsig.r, authsig._vs]), data);
     }
 }
 
@@ -134,8 +139,9 @@ const ValidatorInterface = new Interface([
     "function claim(address beneficiary, bytes data, bytes authsig, bytes claimsig)"
 ]);
 
-export function buildClaim(beneficiary: string, {validator, claimkey, authsig, data}: ClaimCode): [string, BytesLike, BytesLike, BytesLike] {
+export function buildClaim(beneficiary: string, {validator, claimseed, authsig, data}: ClaimCode): [string, BytesLike, BytesLike, BytesLike] {
     const authsighash = keccak256(authsig);
+    const claimkey = keccak256(claimseed);
     const signer = new SigningKey(claimkey);
     const claimhash = solidityKeccak256(
       ['bytes', 'address', 'bytes', 'bytes32', 'address'],
