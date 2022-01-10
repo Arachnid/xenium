@@ -75,10 +75,10 @@ describe('ERC20Executor', () => {
             const executorData = '0x';
             const claimant = signers[3].address
 
-            // first tx should pass
+            // first claim should pass
             await executor.executeClaim(signers[0].address, claimant, signers[1].address, claimData, executorData);
 
-            // seconde tx should revert
+            // second claim should revert
             await expect(executor.executeClaim(signers[0].address, claimant, signers[1].address, claimData, executorData)).to.be.reverted;
         });
 
