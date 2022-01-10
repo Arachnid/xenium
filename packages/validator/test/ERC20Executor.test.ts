@@ -59,7 +59,6 @@ describe('ERC20Executor', () => {
             expect(args.beneficiary).to.equal(signers[1].address);
             expect(args.token).to.equal(token.address);
             expect(args.amount).to.equal(amount);
-            expect(args.expiration).to.equal(expiration);
 
             await expect(await token.balanceOf(signers[0].address)).to.be.equal(0);
             await expect(await token.balanceOf(signers[1].address)).to.be.equal(balance);

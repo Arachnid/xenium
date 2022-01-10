@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol";
  *      This executor expects the first 32 bytes of `claimData` to be the nonce; you may optionally use extra data for your own purposes.
  */
 abstract contract ERC20Executor is SingleClaimantExecutor {
-    event ClaimedERC20(address issuer, address from, address beneficiary, address token, uint256 amount, uint256 expiration);
+    event ClaimedERC20(address issuer, address from, address beneficiary, address token, uint256 amount);
     
     error ClaimCodeExpired();
 
@@ -38,7 +38,7 @@ abstract contract ERC20Executor is SingleClaimantExecutor {
         }
         IERC20(token).transferFrom(from, beneficiary, amount);
         
-        emit ClaimedERC20(issuer, from, beneficiary, token, amount, expiration);
+        emit ClaimedERC20(issuer, from, beneficiary, token, amount);
     }
 
     /**
