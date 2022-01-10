@@ -56,15 +56,15 @@ export class ClaimCode {
     readonly validator: string;
     readonly claimseed: Uint8Array;
     readonly claimkey: Uint8Array;
-    readonly claimkey: Uint8Array; 
+    readonly claimant: string;
     readonly authsig: Uint8Array;
     readonly data: Uint8Array;
 
     constructor(validator: string, claimseed: BytesLike, authsig: BytesLike, data: BytesLike) {
         this.validator = validator;
         this.claimseed = arrayify(claimseed);
-        this.claimkey = keccak256(claimseed);
-        this.claimant = computeAddress(claimkey);
+        this.claimkey = arrayify(keccak256(claimseed));
+        this.claimant = computeAddress(this.claimkey);
         this.authsig = arrayify(authsig);
         this.data = arrayify(data);
     }
