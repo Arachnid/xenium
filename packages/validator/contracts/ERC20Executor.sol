@@ -44,18 +44,29 @@ abstract contract ERC20Executor is SingleClaimantExecutor {
 
     /**
      * @dev Returns metadata explaining a claim. Subclasses should call this first and return it if it is nonempty.
+     * @param issuer The address of the issuer.
+     * @param claimant The account that is entitled to make the claim.
      * @param claimData Claim data provided by the issuer.
+     * @param executorData Contextual information stored on the ValidatorRegistry for this issuer.
      * @return A URL that resolves to JSON metadata as described in the spec.
      *         Callers must support at least 'data' and 'https' schemes.
      */
-     function metadata(address /*issuer*/, address /*claimant*/, bytes calldata claimData, bytes calldata /*executorData*/) public override virtual view returns(string memory) {
-        /* uint64 claimNonce = abi.decode(claimData, (uint64)); */
-        /* if(claimNonce < nonce) { */
-        /*     return string(abi.encodePacked( */
-        /*         "data:application/json;base64,", */
-        /*         Base64.encode("{\"valid\":false,\"error\":\"Nonce too low.\"}") */
-        /*     )); */
-        /* } */
+     function metadata(address issuer, address claimant, bytes calldata claimData, bytes calldata executorData) public override virtual view returns(string memory) {
+       string memory ret = super.metadata(issuer, claimant, claimData, executorData);
+        if(bytes(ret).length > 0) {
+            return ret;
+        }
+        (
+         /*address from*/,
+         /*address token*/,
+         /*uint256 amount*/,
+         uint256 expiration) = abi.decode(claimData, (address, address, uint256, uint256));
+        if (block.timestamp > expiration) {
+            return string(abi.encodePacked(
+                "data:application/json;base64,",
+                Base64.encode("{\"valid\":false,\"error\":\"Code has expired.\"}")
+            ));
+        }
         return ""; 
     }
 }
