@@ -26,10 +26,9 @@ abstract contract SingleClaimantExecutor is BaseExecutor {
      * @param claimant The account that is entitled to make the claim.
      * @param beneficiary The account that the claim should benefit.
      * @param claimData Claim data provided by the issuer.
-     * @param executorData Contextual information stored on the ValidatorRegistry for this issuer.
      */
-    function executeClaim(address issuer, address claimant, address beneficiary, bytes calldata claimData, bytes calldata executorData) public virtual override {
-        super.executeClaim(issuer, claimant, beneficiary, claimData, executorData);
+    function executeClaim(address issuer, address claimant, address beneficiary, bytes calldata claimData) public virtual override {
+        super.executeClaim(issuer, claimant, beneficiary, claimData);
 
         // if claimant was already used
         if(claimants[claimant] != address(0)) {
@@ -44,7 +43,7 @@ abstract contract SingleClaimantExecutor is BaseExecutor {
      * @return A URL that resolves to JSON metadata as described in the spec.
      *         Callers must support at least 'data' and 'https' schemes.
      */
-    function metadata(address /*issuer*/, address claimant, bytes calldata /*claimData*/, bytes calldata /*executorData*/) public override virtual view returns(string memory) {
+    function metadata(address /*issuer*/, address claimant, bytes calldata /*claimData*/) public override virtual view returns(string memory) {
       if(claimants[claimant] != address(0)) {
         return string(abi.encodePacked(
                                        "data:application/json;base64,",

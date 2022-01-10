@@ -129,7 +129,6 @@ describe('ValidatorRegistry', () => {
                 expect(claimed.args.issuer).to.equal(issueraddress);
                 expect(claimed.args.beneficiary).to.equal(signers[1].address);
                 expect(claimed.args.claimData).to.equal(hexlify(arrayify(claim[1]).slice(1)));
-                expect(claimed.args.executorData).to.equal('0x');
 
                 expect(events[1].event).to.equal('ClaimExecuted');
                 expect(events[1].args.issuer).to.equal(issueraddress);
@@ -163,6 +162,29 @@ describe('ValidatorRegistry', () => {
             await tx.wait();
 
             await expect(validator.connect(signers[1]).configure(issueraddress, executor.address, '0x')).to.be.revertedWith('NotAuthorised');
+        });
+
+        it('allows ownership transfer and configuration in one tx', async () => {
+            const claim = buildClaim(signers[1].address, issuer.makeConfigCode());
+            const tx = await validator.connect(signers[1]).claimAndConfigure(...claim, executor.address, '0x');
+            const receipt = await tx.wait();
+            const events = receipt.events;
+
+            expect(events[0].event).to.equal('OwnershipUpdated');
+            expect(events[0].args.issuer).to.equal(issueraddress);
+            expect(events[0].args.owner).to.equal(signers[1].address);
+
+            expect(events[1].event).to.equal('ClaimExecuted');
+            expect(events[1].args.issuer).to.equal(issueraddress);
+            expect(events[1].args.beneficiary).to.equal(signers[1].address);
+            expect(events[1].args.data).to.equal(hexlify(claim[1]));
+            expect(events[1].args.authsig).to.equal(hexlify(claim[2]));
+            expect(events[1].args.claimsig).to.equal(hexlify(claim[3]));
+
+            expect(events[2].event).to.equal('ConfigurationUpdated');
+            expect(events[2].args.issuer).to.equal(issueraddress);
+            expect(events[2].args.executor).to.equal(executor.address);
+            expect(events[2].args.data).to.equal('0x');
         });
     });
 

@@ -13,7 +13,7 @@ contract ValidatorRegistry is IValidator, ERC165 {
     using Strings for *;
 
     bytes1 constant CLAIM_REQUEST = 0x00;
-    bytes1 constant CONFIG_REQUEST = 0x80;
+    bytes1 constant OWNERSHIP_REQUEST = 0x80;
 
     error InvalidClaimType(uint8 claimType);
     error InvalidRequest();
@@ -30,13 +30,8 @@ contract ValidatorRegistry is IValidator, ERC165 {
         address owner;
     }
 
-    struct Configuration {
-        IExecutor executor;
-        bytes data;
-    }
-
     mapping(address=>Ownership) public owners;
-    mapping(address=>Configuration) public configs;
+    mapping(address=>IExecutor) public executors;
 
     /**
      * @dev Executes a claim transaction as specified in https://gist.github.com/Arachnid/df9c7e3738ee76bf171c46ef38e4f18b
@@ -45,19 +40,20 @@ contract ValidatorRegistry is IValidator, ERC165 {
      * @param authsig A signature over the authorisation message, produced by the issuer.
      * @param claimsig A signature over the claim message, produced by the client.
      */
-    function claim(address beneficiary, bytes calldata data, bytes calldata authsig, bytes calldata claimsig) external {
+    function claim(address beneficiary, bytes calldata data, bytes calldata authsig, bytes calldata claimsig) public returns(address) {
         if(data.length == 0) {
             revert InvalidRequest();
         }
         (address issuer, address claimant) = ValidatorLib.validate(address(this), beneficiary, data, authsig, claimsig);
         if(data[0] == CLAIM_REQUEST) {
           doClaim(issuer, claimant, beneficiary, data);
-        } else if(data[0] == CONFIG_REQUEST) {
-          doConfigure(issuer, claimant, beneficiary, data);
+        } else if(data[0] == OWNERSHIP_REQUEST) {
+          doSetOwner(issuer, claimant, beneficiary, data);
         } else {
             revert InvalidClaimType(uint8(data[0]));
         }
         emit ClaimExecuted(issuer, beneficiary, data, authsig, claimsig);
+        return issuer;
     }
 
     /**
@@ -69,21 +65,21 @@ contract ValidatorRegistry is IValidator, ERC165 {
      *         Callers must support at least 'data' and 'https' schemes.
      */
     function metadata(address issuer, address claimant, bytes calldata data) external view returns(string memory) {
-        if(data.length == 0 || (data[0] == CONFIG_REQUEST && data.length != 33)) {
+        if(data.length == 0 || (data[0] == OWNERSHIP_REQUEST && data.length != 33)) {
             return string(abi.encodePacked(
                 "data:application/json;base64,",
                 Base64.encode("{\"valid\":false,\"error\":\"Invalid request\"}")
             ));
         } else if(data[0] == CLAIM_REQUEST) {
-            Configuration memory config = configs[issuer];
-            if(address(config.executor) == address(0)) {
+            IExecutor executor = executors[issuer];
+            if(address(executor) == address(0)) {
                 return string(abi.encodePacked(
                     "data:application/json;base64,",
                     Base64.encode("{\"valid\":false,\"error\":\"No executor configured for this issuer\"}")
                 ));
             }
-            return config.executor.metadata(issuer, claimant, data[1:], config.data);
-        } else if(data[0] == CONFIG_REQUEST) {
+            return executor.metadata(issuer, claimant, data[1:]);
+        } else if(data[0] == OWNERSHIP_REQUEST) {
             Ownership memory owner = owners[issuer];
             uint64 nonce = abi.decode(data[1:], (uint64));
             if(nonce < owner.nonce) {
@@ -111,14 +107,28 @@ contract ValidatorRegistry is IValidator, ERC165 {
      * @dev Updates the configuration for an issuer.
      * @param issuer The issuer to update the configuration for.
      * @param executor The address of the executor contract to use.
-     * @param data Data to pass to `executor.executeClaim` as `executorData` each time a claim is made.
+     * @param data Data to pass to the executor's `configure` method.
      */
-    function configure(address issuer, address executor, bytes calldata data) external {
+    function configure(address issuer, address executor, bytes calldata data) public {
         if(owners[issuer].owner != msg.sender) {
             revert NotAuthorised();
         }
-        configs[issuer] = Configuration(IExecutor(executor), data);
+        executors[issuer] = IExecutor(executor);
         emit ConfigurationUpdated(issuer, executor, data);
+    }
+
+    /**
+     * @dev Claims ownership of an issuer and configures it in one transaction.
+     * @param owner The (new) owner of the issuer.
+     * @param claimData The data field from the claim being submitted.
+     * @param authsig The authorisation signature from the claim.
+     * @param claimsig The claim signature from the claim.
+     * @param executor The address of the executor contract to use.
+     * @param configData Data to pass to the executor's `configure` method.
+     */
+    function claimAndConfigure(address owner, bytes calldata claimData, bytes calldata authsig, bytes calldata claimsig, address executor, bytes calldata configData) external {
+        address issuer = claim(owner, claimData, authsig, claimsig);
+        configure(issuer, executor, configData);
     }
 
     function supportsInterface(bytes4 interfaceId) public view override(IERC165, ERC165) returns(bool) {
@@ -126,14 +136,14 @@ contract ValidatorRegistry is IValidator, ERC165 {
     }
 
     function doClaim(address issuer, address claimant, address beneficiary, bytes calldata data) internal {
-        Configuration memory config = configs[issuer];
-        if(address(config.executor) == address(0)) {
+        IExecutor executor = executors[issuer];
+        if(address(executor) == address(0)) {
             revert NotConfigured();
         }
-        config.executor.executeClaim(issuer, claimant, beneficiary, data[1:], config.data);
+        executor.executeClaim(issuer, claimant, beneficiary, data[1:]);
     }
 
-    function doConfigure(address issuer, address /*claimant*/, address beneficiary, bytes calldata data) internal {
+    function doSetOwner(address issuer, address /*claimant*/, address beneficiary, bytes calldata data) internal {
         if(data.length != 33) {
             revert InvalidRequest();
         }

@@ -25,10 +25,9 @@ abstract contract HighestNonceExecutor is BaseExecutor {
      * @param claimant The account that is entitled to make the claim.
      * @param beneficiary The account that the claim should benefit.
      * @param claimData Claim data provided by the issuer.
-     * @param executorData Contextual information stored on the ValidatorRegistry for this issuer.
      */
-    function executeClaim(address issuer, address claimant, address beneficiary, bytes calldata claimData, bytes calldata executorData) public virtual override {
-        super.executeClaim(issuer, claimant, beneficiary, claimData, executorData);
+    function executeClaim(address issuer, address claimant, address beneficiary, bytes calldata claimData) public virtual override {
+        super.executeClaim(issuer, claimant, beneficiary, claimData);
         uint64 claimNonce = abi.decode(claimData, (uint64));
         if(claimNonce < nonce) {
             revert NonceTooLow();
@@ -42,7 +41,7 @@ abstract contract HighestNonceExecutor is BaseExecutor {
      * @return A URL that resolves to JSON metadata as described in the spec.
      *         Callers must support at least 'data' and 'https' schemes.
      */
-    function metadata(address /*issuer*/, address /*claimaint*/, bytes calldata claimData, bytes calldata /*executorData*/) public override virtual view returns(string memory) {
+    function metadata(address /*issuer*/, address /*claimaint*/, bytes calldata claimData) public override virtual view returns(string memory) {
         uint64 claimNonce = abi.decode(claimData, (uint64));
         if(claimNonce < nonce) {
             return string(abi.encodePacked(
