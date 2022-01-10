@@ -58,6 +58,22 @@ describe('ERC20Executor', () => {
             await expect(await token.balanceOf(signers[1].address)).to.be.equal(balance);
         });
 
+        it('claimant can be claimed only once', async () => {
+            const amount = balance
+            const expiration = 11234234223
+            const claimData = defaultAbiCoder.encode(
+                ['address', 'address', 'uint256', 'uint256'], [signers[0].address, token.address, amount, expiration]
+            );
+            const executorData = '0x';
+            const claimant = signers[3].address
+
+            // first tx should pass
+            await executor.executeClaim(signers[0].address, claimant, signers[1].address, claimData, executorData);
+
+            // seconde tx should revert
+            await expect(executor.executeClaim(signers[0].address, claimant, signers[1].address, claimData, executorData)).to.be.reverted;
+        });
+
         it('only allows calls from the validator', async () => {
             const amount = balance
             const expiration = 11234234223
