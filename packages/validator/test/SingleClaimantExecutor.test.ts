@@ -9,15 +9,15 @@ function parseMetadata(datauri: string) {
     return JSON.parse(atob(datauri.split(',')[1]));
 }
 
-describe('HighestNonceExecutor', () => {
+describe('SingleClaimantExecutor', () => {
     let signers: SignerWithAddress[];
     let snapshot: number;
     let executor: Contract;
 
     before(async () => {
         signers = await ethers.getSigners();
-        const TestHighestNonceExecutor = await ethers.getContractFactory("TestHighestNonceExecutor");
-        executor = await TestHighestNonceExecutor.deploy(signers[0].address);
+        const TestSingleClaimantExecutor = await ethers.getContractFactory("TestSingleClaimantExecutor");
+        executor = await TestSingleClaimantExecutor.deploy(signers[0].address);
         await executor.deployed();
     });
 
@@ -30,7 +30,7 @@ describe('HighestNonceExecutor', () => {
     })
 
     describe('executeClaim()', () => {
-        it('emits an event and updates the nonce', async () => {
+        it('emits an event and saves the claimant', async () => {
             const claimData = defaultAbiCoder.encode(['uint64'], [0]);
             const executorData = '0x';
             const claimant = signers[3].address
@@ -43,6 +43,9 @@ describe('HighestNonceExecutor', () => {
             expect(args.beneficiary).to.equal(signers[1].address);
             expect(args.claimData).to.equal(claimData);
             expect(args.executorData).to.equal(executorData);
+
+            // claimant is saved to beneficiary
+            expect(await executor.claimants(claimant)).to.equal(signers[1].address);
         });
 
         it('only allows calls from the validator', async () => {
@@ -52,46 +55,27 @@ describe('HighestNonceExecutor', () => {
             await expect(executor.connect(signers[1]).executeClaim(signers[0].address, claimant, signers[1].address, claimData, executorData)).to.be.reverted;
         });
 
-        it('allows skipping nonces', async () => {
-            const claimData = defaultAbiCoder.encode(['uint64'], [1]);
-            const executorData = '0x';
-            const claimant = signers[3].address
-            const tx = await executor.executeClaim(signers[0].address, claimant, signers[1].address, claimData, executorData);
-            const receipt = await tx.wait();
-            expect(receipt.events.length).to.equal(1);
-            expect(receipt.events[0].event).to.equal('Claimed');
-        });
-
-        it('reverts if the nonce is too low', async () => {
+        it('reverts if claimant was used', async () => {
             const claimData = defaultAbiCoder.encode(['uint64'], [0]);
             const executorData = '0x';
             const claimant = signers[3].address
             const tx = await executor.executeClaim(signers[0].address, claimant, signers[1].address, claimData, executorData);
-            const receipt = await tx.wait();
-            expect(receipt.events.length).to.equal(1);
-            expect(receipt.events[0].event).to.equal('Claimed');
-            await expect(executor.executeClaim(signers[0].address, claimant, signers[1].address, claimData, executorData)).to.be.reverted;
-        });
-
-        it('reverts if no nonce is provided', async () => {
-            const claimData = '0x';
-            const executorData = '0x';
-            const claimant = signers[3].address
-            await expect(executor.executeClaim(signers[0].address, claimant, signers[1].address, claimData, executorData)).to.be.reverted;
+            const claimData2 = defaultAbiCoder.encode(['uint64'], [1]);
+            await expect(executor.executeClaim(signers[0].address, claimant, signers[1].address, claimData2, executorData)).to.be.reverted;
         });
     });
 
     describe('metadata()', () => {
         it('returns valid metadata', async () => {
-            const claimData = defaultAbiCoder.encode(['uint64'], [0]);
+            const claimData = '0x';
             const executorData = '0x';
-            const claimant = signers[3].address            
+            const claimant = signers[3].address
             const metadata = parseMetadata(await executor.metadata(signers[0].address, claimant, claimData, executorData));
             expect(metadata.valid).to.be.true;
         });
 
-        it('returns an error in the metadata if the nonce is too low', async () => {
-            const claimData = defaultAbiCoder.encode(['uint64'], [0]);
+        it('returns an error in the metadata if the claimant was already used', async () => {
+            const claimData = '0x';
             const executorData = '0x';
             const claimant = signers[3].address
             const tx = await executor.executeClaim(signers[0].address, claimant, signers[1].address, claimData, executorData);

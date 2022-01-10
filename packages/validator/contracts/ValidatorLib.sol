@@ -4,7 +4,7 @@ pragma solidity ^0.8.10;
 import "@openzeppelin/contracts/contracts/utils/cryptography/ECDSA.sol";
 
 library ValidatorLib {
-    function validate(address validator, address beneficiary, bytes calldata data, bytes calldata authsig, bytes calldata claimsig) internal pure returns(address) {
+  function validate(address validator, address beneficiary, bytes calldata data, bytes calldata authsig, bytes calldata claimsig) internal pure returns(address, address) {
         bytes32 claimhash = keccak256(abi.encodePacked(
             hex"1900",
             validator,
@@ -20,6 +20,7 @@ library ValidatorLib {
             keccak256(data),
             claimant
         ));
-        return ECDSA.recover(authhash, authsig);
+        address issuer = ECDSA.recover(authhash, authsig);
+        return (issuer, claimant);
     }
 }

@@ -1,21 +1,20 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "../HighestNonceExecutor.sol";
+import "../SingleClaimantExecutor.sol";
 /**
- * @dev Test implementation of a HighestNonceExecutor that just logs the fact it was called.
+ * @dev Test implementation of a SingleClaimantExecutor that just logs the fact it was called.
  */
-contract TestHighestNonceExecutor is HighestNonceExecutor {
+contract TestSingleClaimantExecutor is SingleClaimantExecutor {
     event Claimed(address issuer, address beneficiary, bytes claimData, bytes executorData);
 
-    constructor(address _validator) HighestNonceExecutor(_validator) { }
+    constructor(address _validator) SingleClaimantExecutor(_validator) { }
 
     /**
      * @dev Executes a claim that has been verified by the `ValidatorRegistry`. Implementers must check that this function
      *      was called by a registry they recognise, and that any conditions in claimData such as replay protection are met
      *      before acting on the request.
      * @param issuer The account that issued the claim.
-     * @param claimant The account that is entitled to make the claim.
      * @param beneficiary The account that the claim should benefit.
      * @param claimData Claim data provided by the issuer.
      * @param executorData Contextual information stored on the ValidatorRegistry for this issuer.

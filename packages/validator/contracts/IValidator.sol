@@ -20,9 +20,10 @@ interface IValidator is IERC165 {
     /**
      * @dev Returns metadata explaining a claim.
      * @param issuer The address of the issuer.
+     * @param claimant The account that is entitled to make the claim.
      * @param data Claim data provided by the issuer.
      * @return A URL that resolves to JSON metadata as described in the spec.
      *         Callers must support at least 'data' and 'https' schemes.
      */
-    function metadata(address issuer, bytes calldata data) external view returns(string memory);
+    function metadata(address issuer, address claimant, bytes calldata data) external view returns(string memory);
 }

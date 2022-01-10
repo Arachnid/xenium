@@ -55,12 +55,16 @@ function unrleZeros(data: Uint8Array): Uint8Array {
 export class ClaimCode {
     readonly validator: string;
     readonly claimseed: Uint8Array;
+    readonly claimkey: Uint8Array;
+    readonly claimkey: Uint8Array; 
     readonly authsig: Uint8Array;
     readonly data: Uint8Array;
 
     constructor(validator: string, claimseed: BytesLike, authsig: BytesLike, data: BytesLike) {
         this.validator = validator;
         this.claimseed = arrayify(claimseed);
+        this.claimkey = keccak256(claimseed);
+        this.claimant = computeAddress(claimkey);
         this.authsig = arrayify(authsig);
         this.data = arrayify(data);
     }
