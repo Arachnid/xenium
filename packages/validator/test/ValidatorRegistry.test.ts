@@ -174,7 +174,7 @@ describe('ValidatorRegistry', () => {
             await tx.wait();
             const tx2 = await validator.configure(issueraddress, executor.address, '0x');
             await tx2.wait();
-            
+
             const claimcode = issuer.makeClaimCode();
 
             const metadata = parseMetadata(await validator.metadata(issueraddress, claimcode.claimant, claimcode.data));
