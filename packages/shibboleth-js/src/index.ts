@@ -54,15 +54,18 @@ function unrleZeros(data: Uint8Array): Uint8Array {
 
 export class ClaimCode {
     readonly validator: string;
-    readonly claimkey: Uint8Array;
+    readonly claimant: string;           
+    readonly claimkey: Uint8Array; 
     readonly authsig: Uint8Array;
     readonly data: Uint8Array;
+
 
     constructor(validator: string, claimkey: BytesLike, authsig: BytesLike, data: BytesLike) {
         this.validator = validator;
         this.claimkey = arrayify(claimkey);
         this.authsig = arrayify(authsig);
         this.data = arrayify(data);
+        this.claimant = computeAddress(claimkey);
     }
 
     static fromString(str: string): ClaimCode {

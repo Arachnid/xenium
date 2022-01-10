@@ -63,11 +63,12 @@ contract ValidatorRegistry is IValidator, ERC165 {
     /**
      * @dev Returns metadata explaining a claim.
      * @param issuer The address of the issuer.
+     * @param claimant The account that is entitled to make the claim.
      * @param data Claim data provided by the issuer.
      * @return A URL that resolves to JSON metadata as described in the spec.
      *         Callers must support at least 'data' and 'https' schemes.
      */
-    function metadata(address issuer, bytes calldata data) external view returns(string memory) {
+    function metadata(address issuer, address claimant, bytes calldata data) external view returns(string memory) {
         if(data.length == 0 || (data[0] == CONFIG_REQUEST && data.length != 33)) {
             return string(abi.encodePacked(
                 "data:application/json;base64,",
@@ -81,7 +82,7 @@ contract ValidatorRegistry is IValidator, ERC165 {
                     Base64.encode("{\"valid\":false,\"error\":\"No executor configured for this issuer\"}")
                 ));
             }
-            return config.executor.metadata(issuer, data[1:], config.data);
+            return config.executor.metadata(issuer, claimant, data[1:], config.data);
         } else if(data[0] == CONFIG_REQUEST) {
             Ownership memory owner = owners[issuer];
             uint64 nonce = abi.decode(data[1:], (uint64));

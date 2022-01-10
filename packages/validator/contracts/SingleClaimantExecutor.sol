@@ -36,5 +36,21 @@ abstract contract SingleClaimantExecutor is BaseExecutor {
             revert AlreadyClaimed();
         }
         claimants[claimant] = beneficiary;
+    }
+
+    /**
+     * @dev Returns metadata explaining a claim. Subclasses should call this first and return it if it is nonempty.
+     * @param claimant The account that is entitled to make the claim.
+     * @return A URL that resolves to JSON metadata as described in the spec.
+     *         Callers must support at least 'data' and 'https' schemes.
+     */
+    function metadata(address /*issuer*/, address claimant, bytes calldata /*claimData*/, bytes calldata /*executorData*/) public override virtual view returns(string memory) {
+      if(claimants[claimant] != address(0)) {
+        return string(abi.encodePacked(
+                                       "data:application/json;base64,",
+                                       Base64.encode("{\"valid\":false,\"error\":\"Code already claimed..\"}")
+                                       ));
+      }
+      return "";
     }    
 }

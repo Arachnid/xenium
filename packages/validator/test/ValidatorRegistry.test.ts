@@ -174,40 +174,42 @@ describe('ValidatorRegistry', () => {
             await tx.wait();
             const tx2 = await validator.configure(issueraddress, executor.address, '0x');
             await tx2.wait();
-
+            
             const claimcode = issuer.makeClaimCode();
-            const metadata = parseMetadata(await validator.metadata(issueraddress, claimcode.data));
+
+            const metadata = parseMetadata(await validator.metadata(issueraddress, claimcode.claimant, claimcode.data));
             expect(metadata.valid).to.be.true;
             expect(metadata.data.title).to.equal('Emit an event');
         });
 
         it('returns an error if no executor is set', async () => {
             const claimcode = issuer.makeClaimCode();
-            const metadata = parseMetadata(await validator.metadata(issueraddress, claimcode.data));
+            const metadata = parseMetadata(await validator.metadata(issueraddress, claimcode.claimant, claimcode.data));
             expect(metadata.valid).to.be.false;
             expect(metadata.error).to.equal('No executor configured for this issuer');
         });
 
         it('returns metadata for a configuration request', async () => {
             const configcode = issuer.makeConfigCode();
-            const metadata = parseMetadata(await validator.metadata(issueraddress, configcode.data));
+            const metadata = parseMetadata(await validator.metadata(issueraddress, configcode.claimant, configcode.data));
             expect(metadata.valid).to.be.true;
             expect(metadata.data.title).to.equal(`Set owner for issuer ${issueraddress.toLowerCase()}`);
         });
 
         it('returns an error if the configuration nonce is too low', async () => {
-            const conf = buildClaim(signers[0].address, issuer.makeConfigCode());
+            const configcode = issuer.makeConfigCode();
+            const conf = buildClaim(signers[0].address, configcode);
             const tx = await validator.claim(...conf);
             await tx.wait();
 
-            const metadata = parseMetadata(await validator.metadata(issueraddress, conf[1]));
+            const metadata = parseMetadata(await validator.metadata(issueraddress, configcode.claimant, conf[1]));
             expect(metadata.valid).to.be.false;
             expect(metadata.error).to.equal('Nonce too low');
         });
 
         it('returns an error for an unknown request type', async () => {
             const code = issuer.makeClaimCode(1);
-            const metadata = parseMetadata(await validator.metadata(issueraddress, code.data));
+            const metadata = parseMetadata(await validator.metadata(issueraddress, code.claimant, code.data));
             expect(metadata.valid).to.be.false;
             expect(metadata.error).to.equal('Unknown command type');
         });

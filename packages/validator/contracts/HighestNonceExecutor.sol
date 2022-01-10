@@ -42,7 +42,7 @@ abstract contract HighestNonceExecutor is BaseExecutor {
      * @return A URL that resolves to JSON metadata as described in the spec.
      *         Callers must support at least 'data' and 'https' schemes.
      */
-    function metadata(address /*issuer*/, bytes calldata claimData, bytes calldata /*executorData*/) public override virtual view returns(string memory) {
+    function metadata(address /*issuer*/, address /*claimaint*/, bytes calldata claimData, bytes calldata /*executorData*/) public override virtual view returns(string memory) {
         uint64 claimNonce = abi.decode(claimData, (uint64));
         if(claimNonce < nonce) {
             return string(abi.encodePacked(
