@@ -12,53 +12,51 @@ import "@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol";
 abstract contract ERC20Executor is SingleClaimantExecutor {
     event ClaimedERC20(address issuer, address from, address beneficiary, address token, uint256 amount);
     
-    error ClaimCodeExpired();
-
+    error ClaimCodeExpired();    
+    
     constructor(address _validator) SingleClaimantExecutor(_validator) { }
   
     /**
      * @dev Executes a claim that has been verified by the `ValidatorRegistry`. Implementers must check that this function
      *      was called by a registry they recognise, and that any conditions in claimData such as replay protection are met
      *      before acting on the request.
-     * @param issuer The account that issued the claim.
-     * @param claimant The account that is entitled to make the claim.
-     * @param beneficiary The account that the claim should benefit.
-     * @param claimData Claim data provided by the issuer.
+     * @param _issuer The account that issued the claim.
+     * @param _claimant The account that is entitled to make the claim.
+     * @param _beneficiary The account that the claim should benefit.
+     * @param _claimData Claim data provided by the issuer.
      */
-    function executeClaim(address issuer, address claimant, address beneficiary, bytes calldata claimData) public virtual override {
-        super.executeClaim(issuer, claimant, beneficiary, claimData);
+    function executeClaim(address _issuer, address _claimant, address _beneficiary, bytes calldata _claimData) public virtual override {
+        super.executeClaim(_issuer, _claimant, _beneficiary, _claimData);
         (
-         address from,
          address token,
          uint256 amount,
-         uint256 expiration) = abi.decode(claimData, (address, address, uint256, uint256));
+         uint256 expiration) = abi.decode(configData, (address, uint256, uint256));
 
         if (block.timestamp > expiration) {
           revert ClaimCodeExpired();
         }
-        IERC20(token).transferFrom(from, beneficiary, amount);
+        IERC20(token).transferFrom(owner, _beneficiary, amount);
         
-        emit ClaimedERC20(issuer, from, beneficiary, token, amount);
+        emit ClaimedERC20(_issuer, owner, _beneficiary, token, amount);
     }
 
     /**
      * @dev Returns metadata explaining a claim. Subclasses should call this first and return it if it is nonempty.
-     * @param issuer The address of the issuer.
-     * @param claimant The account that is entitled to make the claim.
-     * @param claimData Claim data provided by the issuer.
+     * @param _issuer The address of the issuer.
+     * @param _claimant The account that is entitled to make the claim.
+     * @param _claimData Claim data provided by the issuer.
      * @return A URL that resolves to JSON metadata as described in the spec.
      *         Callers must support at least 'data' and 'https' schemes.
      */
-     function metadata(address issuer, address claimant, bytes calldata claimData) public override virtual view returns(string memory) {
-       string memory ret = super.metadata(issuer, claimant, claimData);
+     function metadata(address _issuer, address _claimant, bytes calldata _claimData) public override virtual view returns(string memory) {
+       string memory ret = super.metadata(_issuer, _claimant, _claimData);
         if(bytes(ret).length > 0) {
             return ret;
         }
         (
-         /*address from*/,
          /*address token*/,
          /*uint256 amount*/,
-         uint256 expiration) = abi.decode(claimData, (address, address, uint256, uint256));
+         uint256 expiration) = abi.decode(configData, (address, uint256, uint256));
         if (block.timestamp > expiration) {
             return string(abi.encodePacked(
                 "data:application/json;base64,",
