@@ -92,6 +92,10 @@ describe('ERC20Executor', () => {
             await expect(executor.connect(beneficiary).executeClaim(issuer.address, claimant.address, beneficiary.address, claimData)).to.be.reverted;
         });
 
+        it('only allows authorized issuer', async () => {
+            await expect(executor.executeClaim(signers[4].address, claimant.address, beneficiary.address, claimData)).to.be.reverted;
+        });
+
         it('reverts if the deadline has passed', async () => {
             const expiration = JULY_30_2015;
             const configData = defaultAbiCoder.encode(
