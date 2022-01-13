@@ -5,7 +5,8 @@ import "./SingleClaimantExecutor.sol";
 import "@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol";
 
 /**
- * @dev An abstract implementation of an Executor that only allows claims that have a higher nonce than previously seen to execute.
+ * @dev An abstract implementation of an Executor that transfers ERC20 tokens to beneficiary on claim. Doesn't have replay protection, 
+ *      implementation must also inherit from one of the replay protection contract (SingleClaimantExecutor/HighestNonceExecutor). 
  *      To use, subclass and override `executeClaim` and `metadata`, being sure to call `super` inside `executeClaim` before doing anything else.
  *      This executor expects the first 32 bytes of `claimData` to be the nonce; you may optionally use extra data for your own purposes.
  */
