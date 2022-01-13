@@ -19,6 +19,8 @@ describe('SingleClaimantExecutor', () => {
         const TestSingleClaimantExecutor = await ethers.getContractFactory("TestSingleClaimantExecutor");
         executor = await TestSingleClaimantExecutor.deploy(signers[0].address);
         await executor.deployed();
+        const configData = '0x'
+        await executor.configure(signers[0].address, signers[0].address, configData);
     });
 
     beforeEach(async () => {

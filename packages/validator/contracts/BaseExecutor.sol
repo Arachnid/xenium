@@ -11,8 +11,12 @@ import "@openzeppelin/contracts/contracts/utils/introspection/ERC165.sol";
  */
 abstract contract BaseExecutor is IExecutor, ERC165 {
     address public immutable validator;
+    address public issuer;
+    address public owner;
+    bytes public configData;
 
     error NotAuthorisedError();
+    error NotConfiguredError();
     error NotImplementedError();
 
     constructor(address _validator) {
@@ -26,7 +30,29 @@ abstract contract BaseExecutor is IExecutor, ERC165 {
         _;
     }
 
-    function executeClaim(address /*issuer*/, address /*claimant*/, address /*beneficiary*/, bytes calldata /*claimData*/) public virtual override  validatorOnly {
+    modifier issuerOnly(address _issuer) {
+      if (issuer == address(0)) {
+        revert NotConfiguredError();
+      }
+
+      if(issuer != _issuer) {
+        revert NotAuthorisedError();
+      }
+      _;
+    }
+
+    modifier ownerOnly(address _owner) {
+      if (owner == address(0)) {
+        revert NotConfiguredError();
+      }
+
+      if(owner != _owner) {
+        revert NotAuthorisedError();
+      }
+      _;
+    }
+
+    function executeClaim(address _issuer, address /*claimant*/, address /*beneficiary*/, bytes calldata /*claimData*/) public virtual override validatorOnly issuerOnly(_issuer) {
     }
 
     function supportsInterface(bytes4 interfaceId) public view override(IERC165, ERC165) returns(bool) {
@@ -37,6 +63,9 @@ abstract contract BaseExecutor is IExecutor, ERC165 {
         revert NotImplementedError();
     }
 
-    function configure(address /*issuer*/, address /*owner*/, bytes calldata /*data*/) public virtual override validatorOnly {
+    function configure(address _issuer, address _owner, bytes calldata _data) public virtual override validatorOnly {
+      issuer = _issuer;
+      owner = _owner;
+      configData = _data;
     }
 }

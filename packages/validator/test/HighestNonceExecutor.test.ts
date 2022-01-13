@@ -19,6 +19,8 @@ describe('HighestNonceExecutor', () => {
         const TestHighestNonceExecutor = await ethers.getContractFactory("TestHighestNonceExecutor");
         executor = await TestHighestNonceExecutor.deploy(signers[0].address);
         await executor.deployed();
+        const configData = '0x'
+        await executor.configure(signers[0].address, signers[0].address, configData);
     });
 
     beforeEach(async () => {
@@ -79,7 +81,7 @@ describe('HighestNonceExecutor', () => {
     describe('metadata()', () => {
         it('returns valid metadata', async () => {
             const claimData = defaultAbiCoder.encode(['uint64'], [0]);
-            const claimant = signers[3].address            
+            const claimant = signers[3].address
             const metadata = parseMetadata(await executor.metadata(signers[0].address, claimant, claimData));
             expect(metadata.valid).to.be.true;
         });

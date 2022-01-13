@@ -1,6 +1,6 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
-import { Contract } from "ethers";
+import { Contract, BigNumber } from "ethers";
 import { defaultAbiCoder } from "ethers/lib/utils";
 import { ethers } from "hardhat";
 
@@ -17,20 +17,42 @@ describe('ERC20Executor', () => {
     let snapshot: number;
     let executor: Contract;
     let token: Contract;
-    let balance: number;
+    let owner: SignerWithAddress;
+    let issuer: SignerWithAddress;
+    let beneficiary: SignerWithAddress;
+    let claimant: SignerWithAddress;
+    let claimData: string;
+    let claimAmount: BigNumber;
+    let balance: BigNumber;
 
     before(async () => {
         signers = await ethers.getSigners();
+        owner = signers[0];
+        issuer = signers[1];
+        beneficiary = signers[2]
+        claimant = signers[3]
+
+        claimData = defaultAbiCoder.encode(['uint64'], [0]);
+
         const ERC20Executor = await ethers.getContractFactory("TestERC20Executor");
-        executor = await ERC20Executor.deploy(signers[0].address);
+        executor = await ERC20Executor.deploy(owner.address);
         await executor.deployed();
+
 
         // deploy mock token to owner
         const MockToken = await ethers.getContractFactory("ERC20Mock");
         token = await MockToken.deploy();
 
-        balance = await token.balanceOf(signers[0].address);
+        balance = await token.balanceOf(owner.address);
         await token.approve(executor.address, balance);
+
+        // configure executor
+        claimAmount = balance.div("100");
+        const expiration = DECEMBER_31_2325
+        const configData = defaultAbiCoder.encode(
+            ['address', 'uint256', 'uint256'], [token.address, claimAmount, expiration]
+        );
+        await executor.configure(issuer.address, owner.address, configData);
     });
 
     beforeEach(async () => {
@@ -43,104 +65,63 @@ describe('ERC20Executor', () => {
 
     describe('executeClaim()', () => {
         it('emits an event and tranfers tokens', async () => {
-            const amount = balance
-            const expiration = DECEMBER_31_2325
-            const claimData = defaultAbiCoder.encode(
-                ['address', 'address', 'uint256', 'uint256'], [signers[0].address, token.address, amount, expiration]
-            );
-            const executorData = '0x';
-            const claimant = signers[3].address
-            const tx = await executor.executeClaim(signers[0].address, claimant, signers[1].address, claimData, executorData);
+            const tx = await executor.executeClaim(issuer.address, claimant.address, beneficiary.address, claimData);
             const receipt = await tx.wait();
             expect(receipt.events.length).to.equal(3);
             expect(receipt.events[2].event).to.equal('ClaimedERC20');
             const args = receipt.events[2].args;
-            expect(args.issuer).to.equal(signers[0].address);
-            expect(args.from).to.equal(signers[0].address);
-            expect(args.beneficiary).to.equal(signers[1].address);
+            expect(args.issuer).to.equal(issuer.address);
+            expect(args.from).to.equal(owner.address);
+            expect(args.beneficiary).to.equal(beneficiary.address);
             expect(args.token).to.equal(token.address);
-            expect(args.amount).to.equal(amount);
-            expect(args.expiration).to.equal(expiration);
+            expect(args.amount).to.equal(claimAmount);
 
-            await expect(await token.balanceOf(signers[0].address)).to.be.equal(0);
-            await expect(await token.balanceOf(signers[1].address)).to.be.equal(balance);
+            await expect(await token.balanceOf(owner.address)).to.be.equal(balance.sub(claimAmount));
+            await expect(await token.balanceOf(beneficiary.address)).to.be.equal(claimAmount);
         });
 
         it('claimant can be claimed only once', async () => {
-            const amount = balance
-            const expiration = DECEMBER_31_2325
-            const claimData = defaultAbiCoder.encode(
-                ['address', 'address', 'uint256', 'uint256'], [signers[0].address, token.address, amount, expiration]
-            );
-            const executorData = '0x';
-            const claimant = signers[3].address
-
             // first claim should pass
-            await executor.executeClaim(signers[0].address, claimant, signers[1].address, claimData, executorData);
+            await executor.executeClaim(issuer.address, claimant.address, beneficiary.address, claimData);
 
             // second claim should revert
-            await expect(executor.executeClaim(signers[0].address, claimant, signers[1].address, claimData, executorData)).to.be.reverted;
+            await expect(executor.executeClaim(issuer.address, claimant.address, beneficiary.address, claimData)).to.be.reverted;
         });
 
         it('only allows calls from the validator', async () => {
-            const amount = balance
-            const expiration = DECEMBER_31_2325
-            const claimData = defaultAbiCoder.encode(
-                ['address', 'address', 'uint256', 'uint256'], [signers[0].address, token.address, amount, expiration]
-            );
-            const executorData = '0x';
-            const claimant = signers[3].address
-            await expect(executor.connect(signers[1]).executeClaim(signers[0].address, claimant, signers[1].address, claimData, executorData)).to.be.reverted;
+            await expect(executor.connect(beneficiary).executeClaim(issuer.address, claimant.address, beneficiary.address, claimData)).to.be.reverted;
         });
 
         it('reverts if the deadline has passed', async () => {
-            const amount = balance
-            const expiration = JULY_30_2015
-            const claimData = defaultAbiCoder.encode(
-                ['address', 'address', 'uint256', 'uint256'], [signers[0].address, token.address, amount, expiration]
+            const expiration = JULY_30_2015;
+            const configData = defaultAbiCoder.encode(
+                ['address', 'uint256', 'uint256'], [token.address, claimAmount, expiration]
             );
-            const executorData = '0x';
-            const claimant = signers[3].address
-            await expect(executor.executeClaim(signers[0].address, claimant, signers[1].address, claimData, executorData)).to.be.reverted;
+            await executor.configure(issuer.address, owner.address, configData);
+            await expect(executor.executeClaim(issuer.address, claimant.address, beneficiary.address, claimData)).to.be.reverted;
         });
     });
 
     describe('metadata()', () => {
         it('returns valid metadata', async () => {
-            const amount = balance
-            const expiration = DECEMBER_31_2325
-            const claimData = defaultAbiCoder.encode(
-                ['address', 'address', 'uint256', 'uint256'], [signers[0].address, token.address, amount, expiration]
-            );
-            const executorData = '0x';
-            const claimant = signers[3].address
-            const metadata = parseMetadata(await executor.metadata(signers[0].address, claimant, claimData, executorData));
+            const metadata = parseMetadata(await executor.metadata(issuer.address, claimant.address, claimData));
             expect(metadata.valid).to.be.true;
         });
 
         it('returns an error in the metadata if the claimant was already used', async () => {
-            const amount = balance
-            const expiration = DECEMBER_31_2325
-            const claimData = defaultAbiCoder.encode(
-                ['address', 'address', 'uint256', 'uint256'], [signers[0].address, token.address, amount, expiration]
-            );
-            const executorData = '0x';
-            const claimant = signers[3].address
-            const tx = await executor.executeClaim(signers[0].address, claimant, signers[1].address, claimData, executorData);
+            const tx = await executor.executeClaim(issuer.address, claimant.address, beneficiary.address, claimData);
             await tx.wait();
-            const metadata = parseMetadata(await executor.metadata(signers[0].address, claimant, claimData, executorData));
+            const metadata = parseMetadata(await executor.metadata(issuer.address, claimant.address, claimData));
             expect(metadata.valid).to.be.false;
         });
 
         it('returns an error in the metadata if deadline has passed', async () => {
-            const amount = balance
-            const expiration = JULY_30_2015
-            const claimData = defaultAbiCoder.encode(
-                ['address', 'address', 'uint256', 'uint256'], [signers[0].address, token.address, amount, expiration]
+            const expiration = JULY_30_2015;
+            const configData = defaultAbiCoder.encode(
+                ['address', 'uint256', 'uint256'], [token.address, claimAmount, expiration]
             );
-            const executorData = '0x';
-            const claimant = signers[3].address
-            const metadata = parseMetadata(await executor.metadata(signers[0].address, claimant, claimData, executorData));
+            await executor.configure(issuer.address, owner.address, configData);
+            const metadata = parseMetadata(await executor.metadata(issuer.address, claimant.address, claimData));
             expect(metadata.valid).to.be.false;
         });
     });
