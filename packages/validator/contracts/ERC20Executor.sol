@@ -13,8 +13,8 @@ import "@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol";
 abstract contract ERC20Executor is BaseExecutor {
     event ClaimedERC20(address issuer, address from, address beneficiary, address token, uint256 amount);
     
-    error ClaimCodeExpired();    
-    
+    error ClaimCodeExpired();
+
     constructor(address _validator) { }
   
     /**

@@ -23,8 +23,6 @@ contract TestERC20Executor is SingleClaimantExecutor, ERC20Executor {
     function executeClaim(address issuer, address claimant, address beneficiary, bytes calldata claimData) public override(SingleClaimantExecutor, ERC20Executor)  {
         super.executeClaim(issuer, claimant, beneficiary, claimData);
     }
-
-    
     
     /**
      * @dev Returns metadata explaining a claim.
@@ -42,7 +40,7 @@ contract TestERC20Executor is SingleClaimantExecutor, ERC20Executor {
         ret = ERC20Executor.metadata(issuer, claimant, claimData);
         if(bytes(ret).length > 0) {
             return ret;
-        }        
+        }
         return string(abi.encodePacked(
             "data:application/json;base64,",
             Base64.encode("{\"valid\":true,\"data\":{\"title\":\"Emit an event\"}}")
