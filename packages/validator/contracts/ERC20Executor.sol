@@ -9,12 +9,12 @@ import "@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol";
  *      To use, subclass and override `executeClaim` and `metadata`, being sure to call `super` inside `executeClaim` before doing anything else.
  *      This executor expects the first 32 bytes of `claimData` to be the nonce; you may optionally use extra data for your own purposes.
  */
-abstract contract ERC20Executor is SingleClaimantExecutor {
+abstract contract ERC20Executor is BaseExecutor {
     event ClaimedERC20(address issuer, address from, address beneficiary, address token, uint256 amount);
     
     error ClaimCodeExpired();    
     
-    constructor(address _validator) SingleClaimantExecutor(_validator) { }
+    constructor(address _validator) { }
   
     /**
      * @dev Executes a claim that has been verified by the `ValidatorRegistry`. Implementers must check that this function
@@ -42,17 +42,10 @@ abstract contract ERC20Executor is SingleClaimantExecutor {
 
     /**
      * @dev Returns metadata explaining a claim. Subclasses should call this first and return it if it is nonempty.
-     * @param _issuer The address of the issuer.
-     * @param _claimant The account that is entitled to make the claim.
-     * @param _claimData Claim data provided by the issuer.
      * @return A URL that resolves to JSON metadata as described in the spec.
      *         Callers must support at least 'data' and 'https' schemes.
      */
-     function metadata(address _issuer, address _claimant, bytes calldata _claimData) public override virtual view returns(string memory) {
-       string memory ret = super.metadata(_issuer, _claimant, _claimData);
-        if(bytes(ret).length > 0) {
-            return ret;
-        }
+    function metadata(address /*_issuer*/, address /*_claimant*/, bytes calldata /*_claimData*/) public override virtual view returns(string memory) {
         (
          /*address token*/,
          /*uint256 amount*/,

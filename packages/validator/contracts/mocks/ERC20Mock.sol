@@ -14,7 +14,7 @@ contract ERC20Mock is ERC20 {
     }
     
     // Faucet function to get free tokens
-    function faucet(address to) external {
-        _mint(to, 10**10);
+    function faucet(address to, uint amount) external {
+        _mint(to, amount);
     }    
 }
