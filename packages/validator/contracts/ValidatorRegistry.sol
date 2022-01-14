@@ -23,7 +23,6 @@ contract ValidatorRegistry is IValidator, ERC165 {
 
     event OwnershipUpdated(address indexed issuer, address indexed owner);
     event ConfigurationUpdated(address indexed issuer, address indexed executor, bytes data);
-    event ClaimExecuted(address indexed issuer, address indexed beneficiary, bytes data, bytes authsig, bytes claimsig);
 
     struct Ownership {
         uint64 nonce;
@@ -52,7 +51,7 @@ contract ValidatorRegistry is IValidator, ERC165 {
         } else {
             revert InvalidClaimType(uint8(data[0]));
         }
-        emit ClaimExecuted(issuer, beneficiary, data, authsig, claimsig);
+        emit ClaimExecuted(issuer, claimant, beneficiary, data, authsig, claimsig);
         return issuer;
     }
 
