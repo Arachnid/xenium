@@ -94,7 +94,6 @@ export class ClaimCode {
         );
         const r = hexDataSlice(this.authsig, 0, 32);
         const _vs = hexDataSlice(this.authsig, 32);
-        //const splittedSignature = splitSignature({ r, _vs });
         const issuer = recoverAddress(authhash, { r, _vs });
         return issuer;
     }
