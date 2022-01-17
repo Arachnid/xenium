@@ -5,10 +5,10 @@ import { Contract } from '@ethersproject/contracts';
 import { TransactionResponse } from '@ethersproject/abstract-provider';
 import { keccak256 as solidityKeccak256 } from '@ethersproject/solidity';
 import { SigningKey } from '@ethersproject/signing-key';
-import { arrayify, BytesLike, concat, hexlify } from '@ethersproject/bytes';
+import { arrayify, BytesLike, concat, hexlify, hexDataSlice } from '@ethersproject/bytes';
 import { keccak256 } from '@ethersproject/keccak256';
 import { randomBytes } from '@ethersproject/random';
-import { computeAddress } from '@ethersproject/transactions';
+import { computeAddress, recoverAddress } from '@ethersproject/transactions';
 import { Interface } from "@ethersproject/abi";
 import { Logger } from '@ethersproject/logger';
 
@@ -17,23 +17,23 @@ const logger = new Logger("shibboleth-js/0.1.0");
 function rleZeros(data: Uint8Array): Uint8Array {
     const bytes = [];
     let count = 0;
-    for(let i = 0; i < data.length; i++) {
+    for (let i = 0; i < data.length; i++) {
         const ch = data[i];
-        if(ch == 0) {
+        if (ch == 0) {
             count += 1;
-            if(count == 256) {
+            if (count == 256) {
                 bytes.push(0, count - 1);
                 count = 0;
             }
         } else {
-            if(count > 0) {
+            if (count > 0) {
                 bytes.push(0, count - 1);
                 count = 0;
             }
             bytes.push(ch);
         }
     }
-    if(count > 0) {
+    if (count > 0) {
         bytes.push(0, count - 1);
     }
     return Uint8Array.from(bytes);
@@ -41,9 +41,9 @@ function rleZeros(data: Uint8Array): Uint8Array {
 
 function unrleZeros(data: Uint8Array): Uint8Array {
     const bytes = [];
-    for(let i = 0; i < data.length; i++) {
+    for (let i = 0; i < data.length; i++) {
         const ch = data[i];
-        if(ch == 0) {
+        if (ch == 0) {
             bytes.push(...new Array(data[++i] + 1).fill(0));
         } else {
             bytes.push(ch);
@@ -59,6 +59,7 @@ export class ClaimCode {
     readonly claimant: string;
     readonly authsig: Uint8Array;
     readonly data: Uint8Array;
+    readonly issuer: string;
 
     constructor(validator: string, claimseed: BytesLike, authsig: BytesLike, data: BytesLike) {
         this.validator = validator;
@@ -67,12 +68,13 @@ export class ClaimCode {
         this.claimant = computeAddress(this.claimkey);
         this.authsig = arrayify(authsig);
         this.data = arrayify(data);
+        this.issuer = this._recoverIssuer();
     }
 
     static fromString(str: string): ClaimCode {
         const dataArray = Base32.decode(str.toLowerCase());
-        if(dataArray.length < 100) {
-            return logger.throwError("Claim code too short", Logger.errors.INVALID_ARGUMENT, {length: dataArray.length});
+        if (dataArray.length < 100) {
+            return logger.throwError("Claim code too short", Logger.errors.INVALID_ARGUMENT, { length: dataArray.length });
         }
         const validator = hexlify(dataArray.slice(0, 20));
         const claimseed = dataArray.slice(20, 36);
@@ -83,6 +85,18 @@ export class ClaimCode {
 
     toString(): string {
         return Base32.encode(concat([this.validator, this.claimseed, this.authsig, rleZeros(this.data)])).toUpperCase();
+    }
+
+    _recoverIssuer(): string {
+        const authhash: BytesLike = solidityKeccak256(
+            ['bytes', 'address', 'bytes', 'bytes32', 'address'],
+            ['0x1900', this.validator, '0x00', keccak256(this.data), this.claimant]
+        );
+        const r = hexDataSlice(this.authsig, 0, 32);
+        const _vs = hexDataSlice(this.authsig, 32);
+        //const splittedSignature = splitSignature({ r, _vs });
+        const issuer = recoverAddress(authhash, { r, _vs });
+        return issuer;
     }
 }
 
@@ -106,6 +120,8 @@ export abstract class AbstractIssuer {
         const authsig = this.privateKey.signDigest(authhash);
         return new ClaimCode(this.validator, claimseed, concat([authsig.r, authsig._vs]), data);
     }
+
+
 }
 
 export enum ClaimType {
@@ -144,20 +160,20 @@ export function buildClaim(beneficiary: string, {validator, claimseed, authsig, 
     const claimkey = keccak256(claimseed);
     const signer = new SigningKey(claimkey);
     const claimhash = solidityKeccak256(
-      ['bytes', 'address', 'bytes', 'bytes32', 'address'],
-      ['0x1900', validator, '0x80', authsighash, beneficiary]
+        ['bytes', 'address', 'bytes', 'bytes32', 'address'],
+        ['0x1900', validator, '0x80', authsighash, beneficiary]
     );
     const claimsig = signer.signDigest(claimhash);
     return [
-      beneficiary,
-      data,
-      authsig,
-      concat([claimsig.r, claimsig._vs]),
+        beneficiary,
+        data,
+        authsig,
+        concat([claimsig.r, claimsig._vs]),
     ];
 }
 
 export function submitClaim(signer: Signer, beneficiary: string, claimcode: ClaimCode): Promise<TransactionResponse> {
-  const claimdata = buildClaim(beneficiary, claimcode);
-  const contract = new Contract(claimcode.validator, ValidatorInterface, signer);
-  return contract.claim(...claimdata);
+    const claimdata = buildClaim(beneficiary, claimcode);
+    const contract = new Contract(claimcode.validator, ValidatorInterface, signer);
+    return contract.claim(...claimdata);
 }
