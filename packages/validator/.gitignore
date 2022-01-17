@@ -1,3 +1,6 @@
 typechain
 cache
 artifacts
+  
+# emacs temp files  
+*~ 
