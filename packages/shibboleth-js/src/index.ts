@@ -120,8 +120,6 @@ export abstract class AbstractIssuer {
         const authsig = this.privateKey.signDigest(authhash);
         return new ClaimCode(this.validator, claimseed, concat([authsig.r, authsig._vs]), data);
     }
-
-
 }
 
 export enum ClaimType {
