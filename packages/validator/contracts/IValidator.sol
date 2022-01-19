@@ -27,4 +27,6 @@ interface IValidator is IERC165 {
      *         Callers must support at least 'data' and 'https' schemes.
      */
     function metadata(address issuer, address claimant, bytes calldata data) external view returns(string memory);
+    
+    event ClaimExecuted(address indexed issuer, address indexed claimant, address indexed beneficiary, bytes data, bytes authsig, bytes claimsig);
 }
