@@ -219,10 +219,10 @@ void initialize_device() {
             }
         }
 
-        // Generate an issuer key
-        ret = create_issuer_key(issuer_key);
-        if(ret != 0) {
-            MBED_ERROR(ret, "Creating issuer key");
+        // Delete issuer key and nonce if they exist
+        ret = reset_store();
+        if(ret != MBED_SUCCESS) {
+            MBED_ERROR(MBED_ERROR_FAILED_OPERATION, "Resetting datastore");
         }
 
         // Write the config to storage

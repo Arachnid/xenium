@@ -3,7 +3,7 @@
 #include "types.h"
 #include <stdint.h>
 
-int create_issuer_key(privkey_t privkey);
+int reset_store();
 
 int get_issuer_key(privkey_t privkey);
 
