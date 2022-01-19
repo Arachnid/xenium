@@ -51,7 +51,7 @@ int get_auth_sig(privkey_t signer, address_t validator, uint8_t type, uint8_t* d
     message.prefix[0] = 0x19;
     message.prefix[1] = 0x00;
     memcpy(&message.validator, validator, sizeof(address_t));
-    message.type = 0x00;
+    message.type = type;
     ethers_keccak256(data, datalen, message.datahash);
     memcpy(&message.claimant, claimant, sizeof(address_t));
 
@@ -63,7 +63,7 @@ int get_auth_sig(privkey_t signer, address_t validator, uint8_t type, uint8_t* d
     return MBED_SUCCESS;
 }
 
-int generate_claim_code(privkey_t issuer_key, uint32_t nonce, char *claimcode) {
+int generate_claim_code(privkey_t issuer_key, uint8_t claim_type, uint32_t nonce, char *claimcode) {
     claimcode_t claim;
     privkey_t claimant_privkey;
     address_t claimant_address;
@@ -91,7 +91,7 @@ int generate_claim_code(privkey_t issuer_key, uint32_t nonce, char *claimcode) {
     claim.datalen = rle_encode(claim.data, claim.data + 16, 32);
 
     // Generate the auth sig
-    ret = get_auth_sig(issuer_key, claim.validator, 0x00, claim.data, claim.datalen, claimant_address, claim.auth_sig);
+    ret = get_auth_sig(issuer_key, claim.validator, claim_type, claim.data, claim.datalen, claimant_address, claim.auth_sig);
     if(ret != MBED_SUCCESS) {
         return ret;
     }

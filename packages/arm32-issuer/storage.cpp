@@ -7,17 +7,17 @@
 
 uint32_t next_nonce = 0xffffffff;
 
+int create_issuer_key(privkey_t privkey) {
+    int ret = rng(privkey, ETHERS_PRIVATEKEY_LENGTH);
+    if(ret != MBED_SUCCESS) {
+        return ret;
+    }
+    return kv_set(ISSUER_KEY, privkey, 32, 0);
+}
+
 int get_issuer_key(privkey_t privkey) {
     size_t key_size;
-    int ret = kv_get(ISSUER_KEY, privkey, ETHERS_PRIVATEKEY_LENGTH, &key_size);
-    if(ret == MBED_ERROR_ITEM_NOT_FOUND) {
-        ret = rng(privkey, ETHERS_PRIVATEKEY_LENGTH);
-        if(ret != MBED_SUCCESS) {
-            return ret;
-        }
-        ret = kv_set(ISSUER_KEY, privkey, 32, 0);
-    }
-    return ret;
+    return kv_get(ISSUER_KEY, privkey, ETHERS_PRIVATEKEY_LENGTH, &key_size);
 }
 
 int get_stored_nonce(uint32_t *nonce) {

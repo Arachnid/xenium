@@ -16,6 +16,6 @@ typedef struct {
 #define BASE32_LEN(len)  (((len)/5)*8 + ((len) % 5 ? 8 : 0))
 #define CLAIMCODE_LEN BASE32_LEN(sizeof(claimcode_t) - 4)
 
-int generate_claim_code(privkey_t issuer_key, uint32_t nonce, char *claimcode);
+int generate_claim_code(privkey_t issuer_key, uint8_t claim_type, uint32_t nonce, char *claimcode);
 
 #endif
