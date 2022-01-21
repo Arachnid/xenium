@@ -14,9 +14,10 @@ interface IValidator is IERC165 {
      * @param data Claim data provided by the issuer.
      * @param authsig A signature over the authorisation message, produced by the issuer.
      * @param claimsig A signature over the claim message, produced by the client.
-     * @return The address of the issuer for this claim.
+     * @return issuer The address of the issuer for this claim.
+     * @return claimant The address of the claimant for this claim.
      */
-    function claim(address beneficiary, bytes calldata data, bytes calldata authsig, bytes calldata claimsig) external returns(address);
+    function claim(address beneficiary, bytes calldata data, bytes calldata authsig, bytes calldata claimsig) external returns(address issuer, address claimant);
 
     /**
      * @dev Returns metadata explaining a claim.

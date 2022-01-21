@@ -121,11 +121,6 @@ export abstract class AbstractIssuer {
     }
 }
 
-export enum ClaimType {
-    CLAIM = 0x00,
-    CONFIG = 0x80
-}
-
 /**
  * Implements an issuer with a request type byte (config or claim) and a nonce field.
  * Intended to be used in conjunction with the ValidatorRegistry and an executor that supports nonces.
@@ -138,13 +133,9 @@ export class NonceIssuer extends AbstractIssuer {
         this.nonce = nonce;
     }
 
-    makeClaimCode(claimType: ClaimType = ClaimType.CLAIM): ClaimCode {
-        const data = concat([[claimType], defaultAbiCoder.encode(['uint64'], [this.nonce++])]);
+    makeClaimCode(): ClaimCode {
+        const data = defaultAbiCoder.encode(['uint64'], [this.nonce++]);
         return this._makeClaimCode(data);
-    }
-
-    makeConfigCode(): ClaimCode {
-        return this.makeClaimCode(ClaimType.CONFIG);
     }
 }
 

@@ -9,16 +9,16 @@ function parseMetadata(datauri: string) {
     return JSON.parse(atob(datauri.split(',')[1]));
 }
 
-describe('HighestNonceExecutor', () => {
+describe('HighestNonceValidator', () => {
     let signers: SignerWithAddress[];
     let snapshot: number;
-    let executor: Contract;
+    let validator: Contract;
 
     before(async () => {
         signers = await ethers.getSigners();
-        const TestHighestNonceExecutor = await ethers.getContractFactory("TestHighestNonceExecutor");
-        executor = await TestHighestNonceExecutor.deploy(signers[0].address);
-        await executor.deployed();
+        const HighestNonceValidator = await ethers.getContractFactory("HighestNonceValidator");
+        validator = await HighestNonceValidator.deploy(signers[0].address);
+        await validator.deployed();
     });
 
     beforeEach(async () => {
