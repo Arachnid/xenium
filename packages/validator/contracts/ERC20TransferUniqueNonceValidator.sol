@@ -23,11 +23,15 @@ contract ERC20TransferUniqueNonceValidator is UniqueNonceDedup, IssuerWhitelistA
         _;
     }
 
-    function isOwner(address owner) public virtual override view delegatecallOnly returns(bool) {
-        return owner == _getArgAddress(0) || owner == _getArgAddress(20);
+    function isOwner(address _owner) public virtual override view delegatecallOnly returns(bool) {
+        return _owner == _getArgAddress(0) || _owner == _getArgAddress(20);
     }
 
-    function tokenInfo(bytes calldata /*data*/) internal virtual override view returns(address token, address sender, uint256 amount) {
+    function owner() external view returns(address) {
+        return _getArgAddress(20);
+    }
+
+    function tokenInfo(bytes calldata /*data*/) public virtual override view returns(address token, address sender, uint256 amount) {
         return (_getArgAddress(40), _getArgAddress(60), _getArgUint256(80));
     }
 

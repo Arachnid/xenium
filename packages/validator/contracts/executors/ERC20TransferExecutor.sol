@@ -13,7 +13,7 @@ import "@openzeppelin/contracts/contracts/utils/Strings.sol";
 abstract contract ERC20TransferExecutor is BaseValidator {
     using Strings for uint256;
 
-    function tokenInfo(bytes calldata data) internal virtual view returns(address token, address sender, uint256 amount);
+    function tokenInfo(bytes calldata data) public virtual view returns(address token, address sender, uint256 amount);
 
     function claim(address beneficiary, bytes calldata data, bytes calldata authsig, bytes calldata claimsig) public override virtual returns(address issuer, address claimant) {
         (issuer, claimant) = super.claim(beneficiary, data, authsig, claimsig);
