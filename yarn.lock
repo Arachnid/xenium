@@ -4275,6 +4275,11 @@ clone@^1.0.2:
   resolved "https://registry.yarnpkg.com/clone/-/clone-1.0.4.tgz#da309cc263df15994c688ca902179ca3c7cd7c7e"
   integrity sha1-2jCcwmPfFZlMaIypAheco8fNfH4=
 
+clones-with-immutable-args@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/clones-with-immutable-args/-/clones-with-immutable-args-1.0.0.tgz#f2ddaa02214575ceae35f7bfbf976a528d455e3b"
+  integrity sha512-DYv2cgcmNuNaxa00Q/HSWAnsIc8H0mMjZHyGHxHUuyj3JoApOS2dcEb9SQ53qCy3SvDAhKZdaHSNHxbLvlIawg==
+
 co@^4.6.0:
   version "4.6.0"
   resolved "https://registry.yarnpkg.com/co/-/co-4.6.0.tgz#6ea6bdf3d853ae54ccb8e47bfa0bf3f9031fb184"

@@ -10,7 +10,15 @@ import "solidity-coverage";
 dotenv.config();
 
 const config: HardhatUserConfig = {
-  solidity: "0.8.10",
+  solidity: {
+    version: "0.8.10",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 10000
+      }
+    }
+  },
   networks: {
     ropsten: {
       url: process.env.ROPSTEN_URL || "",

@@ -1,6 +1,6 @@
 {
   "name": "@shibboleth/validator",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.3",
     "@nomiclabs/hardhat-etherscan": "^2.1.8",
@@ -35,7 +35,8 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "OpenZeppelin/openzeppelin-contracts#master",
-    "@shibboleth/shibboleth-js": "0.1.0"
+    "@shibboleth/shibboleth-js": "0.2.0",
+    "clones-with-immutable-args": "^1.0.0"
   },
   "scripts": {
     "build": "hardhat compile",
