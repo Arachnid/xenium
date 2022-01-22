@@ -60,7 +60,7 @@ This dedup is less restrictive than `HighestNonceDedup`, because it does not enf
 
 ### Auths
 
-#### IssuerWhitelistAuth
+#### [IssuerWhitelistAuth](auths/IssuerWhitelistAuth.sol)
 
 This is the only auth strategy currently implemented. It exposes `addIssuers` and `removeIssuers` functions, which can only be called by contract owners. Any issuer added with these functions is permitted to issue claim codes.
 
@@ -68,7 +68,7 @@ This is the only auth strategy currently implemented. It exposes `addIssuers` an
 
 ### Executors
 
-#### ERC20TransferExecutor
+#### [ERC20TransferExecutor](executors/ERC20TransferExecutor.sol)
 
 Transfers ERC20 tokens to the beneficiary on submission of a successful claim. Tokens are held in an external account and sent using `transferFrom`, rather than being held by the executor itself.
 
