@@ -1,26 +1,41 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "./ERC20TransferExecutor.sol";
-import "./HighestNonceDedup.sol";
-import "./IssuerWhitelistAuth.sol";
+import "./executors/ERC20TransferExecutor.sol";
+import "./dedups/UniqueNonceDedup.sol";
+import "./auths/IssuerWhitelistAuth.sol";
 import "./ClonesWithImmutableArgs.sol";
 import "./Clone.sol";
 
-contract ERC20TransferUniqueNonceValidator is ERC20TransferExecutor, HighestNonceDedup, IssuerWhitelistAuth, Clone {
-    function isOwner(address owner) public virtual override view returns(bool) {
-        return owner == _getArgAddress(0);
+contract ERC20TransferUniqueNonceValidator is UniqueNonceDedup, IssuerWhitelistAuth, ERC20TransferExecutor, Clone {
+    address immutable template;
+
+    error DelegatecallOnly();
+
+    constructor() {
+        template = address(this);
+    }
+
+    modifier delegatecallOnly() {
+        if(address(this) == template) {
+            revert DelegatecallOnly();
+        }
+        _;
+    }
+
+    function isOwner(address owner) public virtual override view delegatecallOnly returns(bool) {
+        return owner == _getArgAddress(0) || owner == _getArgAddress(20);
     }
 
     function tokenInfo(bytes calldata /*data*/) internal virtual override view returns(address token, address sender, uint256 amount) {
-        return (_getArgAddress(20), _getArgAddress(40), _getArgUint256(60));
+        return (_getArgAddress(40), _getArgAddress(60), _getArgUint256(80));
     }
 
-    function claim(address beneficiary, bytes calldata data, bytes calldata authsig, bytes calldata claimsig) public override(ERC20TransferExecutor, HighestNonceDedup, BaseValidator) returns(address issuer, address claimant) {
+    function claim(address beneficiary, bytes calldata data, bytes calldata authsig, bytes calldata claimsig) public override(UniqueNonceDedup, ERC20TransferExecutor, BaseValidator) delegatecallOnly returns(address issuer, address claimant) {
         return super.claim(beneficiary, data, authsig, claimsig);
     }
 
-    function metadata(address issuer, address claimant, bytes calldata claimData) public override(ERC20TransferExecutor, HighestNonceDedup, BaseValidator) virtual view returns(string memory) {
+    function metadata(address issuer, address claimant, bytes calldata claimData) public override(UniqueNonceDedup, ERC20TransferExecutor, BaseValidator) virtual view returns(string memory) {
         return super.metadata(issuer, claimant, claimData);
     }
 }
@@ -28,14 +43,19 @@ contract ERC20TransferUniqueNonceValidator is ERC20TransferExecutor, HighestNonc
 contract ERC20TransferUniqueNonceValidatorFactory {
     using ClonesWithImmutableArgs for address;
 
+    event Cloned(address creator, uint256 nonce, address instance);
+
     ERC20TransferUniqueNonceValidator immutable public implementation;
 
     constructor() {
         implementation = new ERC20TransferUniqueNonceValidator();
     }
 
-    function create(address owner, address token, address sender, uint256 amount) external returns(ERC20TransferUniqueNonceValidator) {
-        bytes memory data = abi.encodePacked(owner, token, sender, amount);
-        return ERC20TransferUniqueNonceValidator(address(implementation).clone(data));
+    function create(uint256 nonce, address owner, address token, address sender, uint256 amount, address[] memory issuers) external returns(ERC20TransferUniqueNonceValidator) {
+        bytes memory data = abi.encodePacked(address(this), owner, token, sender, amount);
+        ERC20TransferUniqueNonceValidator instance = ERC20TransferUniqueNonceValidator(address(implementation).clone(data));
+        instance.addIssuers(issuers);
+        emit Cloned(msg.sender, nonce, address(instance));
+        return instance;
     }
 }

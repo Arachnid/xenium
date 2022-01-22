@@ -29,5 +29,5 @@ interface IValidator is IERC165 {
      */
     function metadata(address issuer, address claimant, bytes calldata data) external view returns(string memory);
     
-    event ClaimExecuted(address indexed issuer, address indexed claimant, address indexed beneficiary, bytes data, bytes authsig, bytes claimsig);
+    event ClaimExecuted(bytes32 indexed claimId, address indexed issuer, address beneficiary, bytes data, bytes authsig, bytes claimsig);
 }

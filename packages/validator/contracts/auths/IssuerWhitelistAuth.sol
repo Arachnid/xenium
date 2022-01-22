@@ -28,7 +28,7 @@ abstract contract IssuerWhitelistAuth is BaseValidator {
         return issuers[issuer];
     }
 
-    function addIssuers(address[] memory _issuers) internal {
+    function addIssuers(address[] memory _issuers) external ownerOnly {
         for(uint256 i = 0; i < _issuers.length; i++) {
             issuers[_issuers[i]] = true;
         }

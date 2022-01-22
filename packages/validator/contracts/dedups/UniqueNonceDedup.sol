@@ -14,13 +14,13 @@ abstract contract UniqueNonceDedup is BaseValidator {
 
     BitMaps.BitMap nonces;
 
-    error NonceAlreadyUsed();
+    error NonceAlreadyUsed(uint256 nonce);
 
     function claim(address beneficiary, bytes calldata data, bytes calldata authsig, bytes calldata claimsig) public override virtual returns(address issuer, address claimant) {
         (issuer, claimant) = super.claim(beneficiary, data, authsig, claimsig);
-        uint64 claimNonce = abi.decode(data, (uint64));
+        uint256 claimNonce = abi.decode(data, (uint256));
         if(nonces.get(claimNonce)) {
-            revert NonceAlreadyUsed();
+            revert NonceAlreadyUsed(claimNonce);
         }
         nonces.set(claimNonce);
     }
@@ -35,7 +35,7 @@ abstract contract UniqueNonceDedup is BaseValidator {
             return ret;
         }
 
-        uint64 claimNonce = abi.decode(claimData, (uint64));
+        uint256 claimNonce = abi.decode(claimData, (uint256));
         if(nonces.get(claimNonce)) {
             return string(abi.encodePacked(
                 "data:application/json;base64,",
