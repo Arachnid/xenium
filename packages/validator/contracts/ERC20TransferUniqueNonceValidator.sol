@@ -4,8 +4,8 @@ pragma solidity ^0.8.10;
 import "./executors/ERC20TransferExecutor.sol";
 import "./dedups/UniqueNonceDedup.sol";
 import "./auths/IssuerWhitelistAuth.sol";
-import "./ClonesWithImmutableArgs.sol";
-import "./Clone.sol";
+import "clones-with-immutable-args/ClonesWithImmutableArgs.sol";
+import "clones-with-immutable-args/Clone.sol";
 
 contract ERC20TransferUniqueNonceValidator is UniqueNonceDedup, IssuerWhitelistAuth, ERC20TransferExecutor, Clone {
     address immutable template;

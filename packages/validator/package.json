@@ -35,7 +35,8 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "OpenZeppelin/openzeppelin-contracts#master",
-    "@shibboleth/shibboleth-js": "0.2.0"
+    "@shibboleth/shibboleth-js": "0.2.0",
+    "clones-with-immutable-args": "^1.0.0"
   },
   "scripts": {
     "build": "hardhat compile",
