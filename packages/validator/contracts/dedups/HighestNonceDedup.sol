@@ -9,17 +9,17 @@ import "@openzeppelin/contracts/contracts/utils/Base64.sol";
  *      only allows claims that have a higher nonce than previously seen to execute.
  */
 abstract contract HighestNonceDedup is BaseValidator {
-    uint64 public nonce;
+    mapping(address=>uint256) public nonce;
 
     error NonceTooLow();
 
     function claim(address beneficiary, bytes calldata data, bytes calldata authsig, bytes calldata claimsig) public override virtual returns(address issuer, address claimant) {
         (issuer, claimant) = super.claim(beneficiary, data, authsig, claimsig);
         uint64 claimNonce = abi.decode(data, (uint64));
-        if(claimNonce < nonce) {
+        if(claimNonce < nonce[issuer]) {
             revert NonceTooLow();
         }
-        nonce = claimNonce + 1;
+        nonce[issuer] = claimNonce + 1;
     }
 
     function metadata(address issuer, address claimant, bytes calldata claimData) public override virtual view returns(string memory) {
@@ -29,7 +29,7 @@ abstract contract HighestNonceDedup is BaseValidator {
         }
 
         uint64 claimNonce = abi.decode(claimData, (uint64));
-        if(claimNonce < nonce) {
+        if(claimNonce < nonce[issuer]) {
             return string(abi.encodePacked(
                 "data:application/json;base64,",
                 Base64.encode("{\"valid\":false,\"error\":\"Nonce too low.\"}")

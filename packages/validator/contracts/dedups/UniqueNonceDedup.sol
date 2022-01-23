@@ -12,21 +12,21 @@ import "@openzeppelin/contracts/contracts/utils/structs/BitMaps.sol";
 abstract contract UniqueNonceDedup is BaseValidator {
     using BitMaps for BitMaps.BitMap;
 
-    BitMaps.BitMap nonces;
+    mapping(address=>BitMaps.BitMap) nonces;
 
     error NonceAlreadyUsed(uint256 nonce);
 
     function claim(address beneficiary, bytes calldata data, bytes calldata authsig, bytes calldata claimsig) public override virtual returns(address issuer, address claimant) {
         (issuer, claimant) = super.claim(beneficiary, data, authsig, claimsig);
         uint256 claimNonce = abi.decode(data, (uint256));
-        if(nonces.get(claimNonce)) {
+        if(nonces[issuer].get(claimNonce)) {
             revert NonceAlreadyUsed(claimNonce);
         }
-        nonces.set(claimNonce);
+        nonces[issuer].set(claimNonce);
     }
 
-    function nonce(uint256 _nonce) public view returns(bool) {
-        return nonces.get(_nonce);
+    function nonce(address issuer, uint256 _nonce) public view returns(bool) {
+        return nonces[issuer].get(_nonce);
     }
 
     function metadata(address issuer, address claimant, bytes calldata claimData) public override virtual view returns(string memory) {
@@ -36,7 +36,7 @@ abstract contract UniqueNonceDedup is BaseValidator {
         }
 
         uint256 claimNonce = abi.decode(claimData, (uint256));
-        if(nonces.get(claimNonce)) {
+        if(nonces[issuer].get(claimNonce)) {
             return string(abi.encodePacked(
                 "data:application/json;base64,",
                 Base64.encode("{\"valid\":false,\"error\":\"Nonce already used.\"}")
