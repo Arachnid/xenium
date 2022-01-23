@@ -40,19 +40,19 @@ Finally, you will need to implement any functions required by the components you
 
 ### Dedups
 
-#### [HighestNonceDedup](dedups/HighestNonceDedup.sol)
+#### [HighestNonceDedup](contracts/dedups/HighestNonceDedup.sol)
 
 Requires that each claim's `data` field have a 32 byte `nonce` as the first element. For a claim to be valid, the `nonce` of that claim must be higher than any `nonce` on a previously processed claim.
 
 This dedup is useful for ensuring that claims are submitted in the order they were generated - which is useful in situations where there is value in being the most recent claimant. For example, this could be used to implement a token that is transferred to whoever claimed most recently, or in applications where you want to ensure that users cannot issue themselves several claim codes and save some of them for later use.
 
-#### [SingleClaimantDedup](dedups/SingleClaimantDedup.sol)
+#### [SingleClaimantDedup](contracts/dedups/SingleClaimantDedup.sol)
 
 This is the simplest dedup to use; it makes no assumptions about the data field at all, and instead just maintains a map of `claimant` addresses it has seen before. Since the Xenium specification requires the claimant private key - and hence its address - to be unique for each claim code, this is sufficient to ensure codes cannot be reused.
 
 This dedup is less gas-efficient than nonce-based dedups, as it requires initializing a new storage slot on each claim.
 
-#### [UniqueNonceDedup](dedups/UniqueNonceDedup.sol)
+#### [UniqueNonceDedup](contracts/dedups/UniqueNonceDedup.sol)
 
 Requires that each claim's `data` field have a 32 byte `nonce` as the first element. For a claim to be valid, the `nonce` of that claim must not have been seen on a previously processed claim.
 
@@ -60,7 +60,7 @@ This dedup is less restrictive than `HighestNonceDedup`, because it does not enf
 
 ### Auths
 
-#### [IssuerWhitelistAuth](auths/IssuerWhitelistAuth.sol)
+#### [IssuerWhitelistAuth](contracts/auths/IssuerWhitelistAuth.sol)
 
 This is the only auth strategy currently implemented. It exposes `addIssuers` and `removeIssuers` functions, which can only be called by contract owners. Any issuer added with these functions is permitted to issue claim codes.
 
@@ -68,7 +68,7 @@ This is the only auth strategy currently implemented. It exposes `addIssuers` an
 
 ### Executors
 
-#### [ERC20TransferExecutor](executors/ERC20TransferExecutor.sol)
+#### [ERC20TransferExecutor](contracts/executors/ERC20TransferExecutor.sol)
 
 Transfers ERC20 tokens to the beneficiary on submission of a successful claim. Tokens are held in an external account and sent using `transferFrom`, rather than being held by the executor itself.
 
@@ -79,3 +79,11 @@ function tokenInfo(bytes calldata data) public virtual view returns(address toke
 ```
 
 `data` is the data field from the claim being processed, and the return values are the address of the ERC20 `token` to transfer, the `sender` of that token, and the `amount` of tokens to transfer. The `sender` must have called `approve` on `token` prior to any claims being submitted.
+
+### Factories
+
+The factories directory contains factory contracts for commonly useful combinations of dedups, auths, and executors. Each is constructed as a factory that produces minimal clones of the relevant issuer, with most parameters made immutable, for maximum gas efficiency. Typical cost to instantiate a contract is only about 120k gas.
+
+|                       | HighestNonceDedup | SingleClaimantDedup | UniqueNonceDedup |
+|-----------------------|-------------------|---------------------|------------------|
+| ERC20TransferExecutor |                   |                     | [ERC20TransferUniqueNonceValidator](contracts/factories/ERC20TransferUniqueNonceValidator.sol) |

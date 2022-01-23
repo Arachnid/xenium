@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "./executors/ERC20TransferExecutor.sol";
-import "./dedups/UniqueNonceDedup.sol";
-import "./auths/IssuerWhitelistAuth.sol";
+import "../executors/ERC20TransferExecutor.sol";
+import "../dedups/UniqueNonceDedup.sol";
+import "../auths/IssuerWhitelistAuth.sol";
 import "clones-with-immutable-args/ClonesWithImmutableArgs.sol";
 import "clones-with-immutable-args/Clone.sol";
 
