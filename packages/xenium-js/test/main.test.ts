@@ -27,10 +27,10 @@ describe('NonceIssuer', () => {
         const issuer = new NonceIssuer(TEST_ADDRESS, privateKey, 0);
         for(let i = 0; i < 5; i++) {
             expect(issuer.nonce).toEqual(i);
-            const claimCode = i%2==0 ? issuer.makeClaimCode() : issuer.makeConfigCode();
+            const claimCode = issuer.makeClaimCode();
             
             expect(claimCode.validator).toEqual(TEST_ADDRESS);
-            expect(hexlify(claimCode.data)).toEqual(hexlify(concat([i%2==0 ? '0x00' : '0x80', defaultAbiCoder.encode(['uint64'], [i])])));
+            expect(hexlify(claimCode.data)).toEqual(hexlify(defaultAbiCoder.encode(['uint64'], [i])));
             
             const claimantaddress = computeAddress(keccak256(claimCode.claimseed));
             const authhash = solidityKeccak256(
@@ -52,6 +52,7 @@ describe('buildClaim', () => {
 
         // Get a claim code
         const claimCodeString = issuer.makeClaimCode().toString();
+        console.log(claimCodeString);
         const claimCode = ClaimCode.fromString(claimCodeString);
 
         // Figure out the address for the ephemeral claimant key
