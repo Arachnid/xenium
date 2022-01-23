@@ -8,5 +8,5 @@
     "declaration": true
   },
   "include": ["./scripts", "./test", "./typechain"],
-  "files": ["./hardhat.config.ts"]
+  "files": ["./hardhat.config.ts", "./test/parseMetadata.ts"]
 }
