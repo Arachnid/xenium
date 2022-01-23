@@ -31,7 +31,7 @@
     "singleQuote": true,
     "trailingComma": "es5"
   },
-  "name": "@shibboleth/shibboleth-js",
+  "name": "@xenium-eth/xenium-js",
   "author": "Nick Johnson <arachnid@notdot.net>",
   "module": "dist/shibboleth.esm.js",
   "size-limit": [

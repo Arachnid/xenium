@@ -1,5 +1,5 @@
 {
-  "name": "@shibboleth/validator",
+  "name": "@xenium-eth/validator",
   "version": "0.2.0",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.3",
