@@ -69,18 +69,16 @@ typedef struct {
     char magic_number[8];       // Identifies if this device has been initialised
     uint8_t validator[20];      // Address of the validator contract
     char url_string[32];        // URL prefix. Null terminated if <32 chars.
-    uint32_t claim_delay;       // Delay between claim codes (seconds).
-    uint8_t claim_type;         // Shibboleth claim type. 0x00 = standard, 0x80 = set owner
-    uint8_t next_claim_type;    // Message type for next message only.
+    uint32_t claim_interval;    // Interval between claim codes (seconds).
+    uint32_t claim_count;       // Max number of claims that can be 'in the bucket'
 } config_t;
 
 const config_t DEFAULT_CONFIG = {
-    "SHIB002",
+    "XENI001",
     {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    "\x04shibboleth.link/#/",
+    "\x04xenium.link/#/",
     30,
-    0,
-    0
+    1
 };
 
 uint8_t EEPROM_REGISTER_INIT[][2] = {
@@ -107,6 +105,8 @@ EventFlags event_flags;
 
 privkey_t issuer_key;
 config_t config;
+uint32_t claims_left;
+std::chrono::time_point<Kernel::Clock> claims_last_updated;
 
 int strnlen(char *s, int maxlen) {
     for(int i = 0; i < maxlen; i++) {
@@ -132,17 +132,9 @@ int write_claim_code(void) {
     }
 
     memcpy(claimcode, config.url_string, urllen);
-    ret = generate_claim_code(issuer_key, config.next_claim_type, nonce, claimcode + urllen - 1);
+    ret = generate_claim_code(issuer_key, nonce, claimcode + urllen - 1);
     if(ret != MBED_SUCCESS) {
         return ret;
-    }
-
-    if(config.next_claim_type != config.claim_type) {
-        config.next_claim_type = config.claim_type;
-        ret = write_config();
-        if(ret != 0) {
-            return ret;
-        }
     }
 
     uint8_t buffer[512];
@@ -159,6 +151,9 @@ int write_claim_code(void) {
     if(ret != 0) {
         return MBED_ERROR_FAILED_OPERATION;
     }
+
+    claims_left -= 1;
+
     return MBED_SUCCESS;
 }
 
@@ -232,11 +227,8 @@ void initialize_device() {
         }
     }
 
-    // Generate a new claim code
-    int ret = write_claim_code();
-    if(ret != MBED_SUCCESS) {
-        MBED_ERROR(ret, "Writing claim code");
-    }
+    claims_left = 0;
+    claims_last_updated = Kernel::Clock::now();
 }
 
 void handle_button_press(void) {
@@ -245,6 +237,15 @@ void handle_button_press(void) {
 
 void handle_gpo(void) {
     event_flags.set(FLAG_GPO_INTERRUPT);
+}
+
+void update_claim_counter() {
+    auto now = Kernel::Clock::now();
+    auto elapsed = now - claims_last_updated;
+    uint32_t intervals = elapsed / (config.claim_interval * 1s);
+    printf("intervals=%d\n", intervals);
+    claims_left = min(config.claim_count, claims_left + intervals);
+    claims_last_updated += intervals * config.claim_interval * 1s;
 }
 
 #define STATE_IDLE 1
@@ -280,10 +281,15 @@ struct next_state_t state_write_tag() {
 }
 
 struct next_state_t state_delay() {
+    // On entering this state, claims_left is 0, and claims_last_updated is in the future
+    // On exiting, claims_left is 1 and claims_last_updated is now
     printf("State: DELAY\n");
     // Stop responding on NFC
     st25.write_dynamic_register(ST25_RF_SLEEP, ST25_DYN_RF_MNGT);
-    event_flags.wait_any_for(FLAG_BUTTON_PRESSED, chrono::duration<uint32_t,std::milli>(config.claim_delay * 1000));
+    std::chrono::time_point<Kernel::Clock> wait_until = claims_last_updated + config.claim_interval * 1s;
+    event_flags.wait_any_until(FLAG_BUTTON_PRESSED, wait_until);
+    claims_left = 1;
+    claims_last_updated = Kernel::Clock::now();
     return {&state_write_tag};
 }
 
@@ -296,10 +302,12 @@ struct next_state_t state_active() {
         }
         
         int flags = event_flags.wait_any_for(FLAGS_ALL, ACTIVE_TIMEOUT);
-        if(flags == osFlagsErrorTimeout) {
-            return {&state_delay};
-        } else if(flags & FLAG_BUTTON_PRESSED) {
-            return {&state_write_tag};
+        if((flags == osFlagsErrorTimeout) || (flags & FLAG_BUTTON_PRESSED)) {
+            if(claims_left > 0) {
+                return {&state_write_tag};
+            } else {
+                return {&state_delay};
+            }
         }
 
         // Otherwise, it was the GPO interrupt; loop around again
@@ -309,9 +317,9 @@ struct next_state_t state_active() {
 struct next_state_t state_idle() {
     printf("State: IDLE\n");
     int flags = event_flags.wait_any(FLAGS_ALL);
-    if(flags & FLAG_BUTTON_PRESSED) {
-        return {&state_write_tag};
-    } else if(flags & FLAG_GPO_INTERRUPT) {
+    update_claim_counter();    
+    printf("claims_left=%d\n", claims_left);
+    if(flags & (FLAG_BUTTON_PRESSED | FLAG_GPO_INTERRUPT)) {
         return {&state_active};
     }
     return {&state_idle};
@@ -323,7 +331,7 @@ int main() {
     gpo.rise(handle_gpo);
     button.fall(handle_button_press);
 
-    struct next_state_t state = {&state_idle};
+    struct next_state_t state = {&state_delay};
     while(true) {
         state = state.func();
     }
