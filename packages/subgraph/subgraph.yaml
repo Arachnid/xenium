@@ -1,0 +1,49 @@
+specVersion: 0.0.2
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: ERC20TransferUniqueNonceValidatorFactory
+    network: rinkeby
+    source:
+      address: "0xB7D2dA8DE6D55d3Cac6491F5e58e87af0D21F2E6"
+      abi: ERC20TransferUniqueNonceValidatorFactory
+      startBlock: 10061936
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      entities:
+        - Cloned
+      abis:
+        - name: ERC20TransferUniqueNonceValidatorFactory
+          file: ./abis/ERC20TransferUniqueNonceValidatorFactory.json
+      eventHandlers:
+        - event: Cloned(indexed address,indexed uint256,address,address,address,address,uint256)
+          handler: handleCloned
+      file: ./src/mapping.ts
+templates:
+  - kind: ethereum
+    name: ERC20TransferUniqueNonceValidator
+    network: rinkeby
+    source:
+      abi: ERC20TransferUniqueNonceValidator
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      entities:
+        - ClaimExecuted
+        - IssuersAdded
+        - IssuersRemoved
+      abis:
+        - name: ERC20TransferUniqueNonceValidator
+          file: ./abis/ERC20TransferUniqueNonceValidator.json
+      eventHandlers:
+        - event: ClaimExecuted(indexed bytes32,indexed address,address,bytes,bytes,bytes)
+          handler: handleClaimExecuted
+        - event: IssuersAdded(address[])
+          handler: handleIssuersAdded
+        - event: IssuersRemoved(address[])
+          handler: handleIssuersRemoved
+      file: ./src/mapping.ts
