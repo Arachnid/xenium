@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Contract } from "ethers";
 import { ethers } from "hardhat";
-import { buildClaim, NonceIssuer } from "@shibboleth/shibboleth-js";
+import { buildClaim, NonceIssuer } from "@xenium-eth/xenium-js";
 import { SigningKey } from "@ethersproject/signing-key";
 import { TestToken } from "../typechain/TestToken";
 import { ERC20TransferUniqueNonceValidator } from "../typechain/ERC20TransferUniqueNonceValidator";

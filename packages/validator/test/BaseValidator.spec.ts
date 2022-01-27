@@ -1,5 +1,5 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { buildClaim, NonceIssuer } from "@shibboleth/shibboleth-js";
+import { buildClaim, NonceIssuer } from "@xenium-eth/xenium-js";
 import { SigningKey } from "ethers/lib/utils";
 import { ethers } from "hardhat";
 import { expect } from "chai";
