@@ -92,7 +92,7 @@ int ST25::write_ndef(const Span<const uint8_t> &data) {
         buf[1] = len;
         memcpy(buf + 2, data.data(), len);
         buf[len + 2] = 0xFE;
-        return write(Span<uint8_t>(buf, len), cclen);
+        return write(Span<uint8_t>(buf, len + 2), cclen);
     } else {
         uint8_t *buf = (uint8_t*)alloca(len + 5);
         buf[0] = 0x03;
@@ -101,7 +101,7 @@ int ST25::write_ndef(const Span<const uint8_t> &data) {
         buf[3] = len & 0xFF;
         memcpy(buf + 4, data.data(), len);
         buf[len + 4] = 0xFE;
-        return write(Span<uint8_t>(buf, len), cclen);
+        return write(Span<uint8_t>(buf, len + 4), cclen);
     }
 }
 

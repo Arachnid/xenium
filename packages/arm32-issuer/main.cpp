@@ -76,8 +76,9 @@ typedef struct {
 const config_t DEFAULT_CONFIG = {
     "XENI001",
     {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    "\x04xenium.link/#/",
-    30,
+    "\x03""bender.local:3000/claim#",
+//    "\x04xenium.link/#/",
+    1,
     1
 };
 
@@ -132,7 +133,7 @@ int write_claim_code(void) {
     }
 
     memcpy(claimcode, config.url_string, urllen);
-    ret = generate_claim_code(issuer_key, nonce, claimcode + urllen - 1);
+    ret = generate_claim_code(issuer_key, nonce, claimcode + urllen);
     if(ret != MBED_SUCCESS) {
         return ret;
     }
