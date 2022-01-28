@@ -103,3 +103,6 @@ dist
 # TernJS port file
 .tern-port
 yarn-error.log
+
+# Emacs temp files
+*~
