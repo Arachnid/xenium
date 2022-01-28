@@ -47,7 +47,7 @@ contract ERC20TransferUniqueNonceValidator is UniqueNonceDedup, IssuerWhitelistA
 contract ERC20TransferUniqueNonceValidatorFactory {
     using ClonesWithImmutableArgs for address;
 
-    event Cloned(address creator, uint256 nonce, address instance);
+    event Cloned(address indexed creator, uint256 indexed nonce, address instance, address owner, address token, address sender, uint256 amount);
 
     ERC20TransferUniqueNonceValidator immutable public implementation;
 
@@ -59,7 +59,7 @@ contract ERC20TransferUniqueNonceValidatorFactory {
         bytes memory data = abi.encodePacked(address(this), owner, token, sender, amount);
         ERC20TransferUniqueNonceValidator instance = ERC20TransferUniqueNonceValidator(address(implementation).clone(data));
         instance.addIssuers(issuers);
-        emit Cloned(msg.sender, nonce, address(instance));
+        emit Cloned(msg.sender, nonce, address(instance), owner, token, sender, amount);
         return instance;
     }
 }
