@@ -157,6 +157,19 @@ int write_claim_code(void) {
     return MBED_SUCCESS;
 }
 
+int write_empty_ndef(void) {
+    uint8_t buffer[512];
+    int size = write_ndef_record(
+        buffer,
+        sizeof(buffer),
+        NDEF_MESSAGE_BEGIN | NDEF_MESSAGE_END | NDEF_TNF_EMPTY,
+        Span<uint8_t>(),
+        Span<uint8_t>(),
+        Span<uint8_t>());
+    
+    return st25.write_ndef(Span<uint8_t>(buffer, size));
+}
+
 void initialize_device() {
     st25.read((uint8_t*)&config, sizeof(config), CONFIG_ADDRESS);
     if(memcmp(config.magic_number, DEFAULT_CONFIG.magic_number, sizeof(DEFAULT_CONFIG.magic_number)) != 0) {
@@ -243,7 +256,6 @@ void update_claim_counter() {
     auto now = Kernel::Clock::now();
     auto elapsed = now - claims_last_updated;
     uint32_t intervals = elapsed / (config.claim_interval * 1s);
-    printf("intervals=%d\n", intervals);
     claims_left = min(config.claim_count, claims_left + intervals);
     claims_last_updated += intervals * config.claim_interval * 1s;
 }
@@ -284,10 +296,19 @@ struct next_state_t state_delay() {
     // On entering this state, claims_left is 0, and claims_last_updated is in the future
     // On exiting, claims_left is 1 and claims_last_updated is now
     printf("State: DELAY\n");
-    // Stop responding on NFC
+    // Replace the tag with empty data
     st25.write_dynamic_register(ST25_RF_SLEEP, ST25_DYN_RF_MNGT);
+    write_empty_ndef();
+    st25.write_dynamic_register(0, ST25_DYN_RF_MNGT);
+
+    // Wait until the end of the delay
     std::chrono::time_point<Kernel::Clock> wait_until = claims_last_updated + config.claim_interval * 1s;
     event_flags.wait_any_until(FLAG_BUTTON_PRESSED, wait_until);
+
+    // Clear any interrupts that happened while we were waiting
+    st25.read_dynamic_register(ST25_DYN_IT_STS);
+
+    // Add one claim to the counter
     claims_left = 1;
     claims_last_updated = Kernel::Clock::now();
     return {&state_write_tag};
@@ -318,7 +339,6 @@ struct next_state_t state_idle() {
     printf("State: IDLE\n");
     int flags = event_flags.wait_any(FLAGS_ALL);
     update_claim_counter();    
-    printf("claims_left=%d\n", claims_left);
     if(flags & (FLAG_BUTTON_PRESSED | FLAG_GPO_INTERRUPT)) {
         return {&state_active};
     }
