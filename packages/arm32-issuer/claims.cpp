@@ -1,4 +1,5 @@
 #include "claims.h"
+#include "helpers.h"
 #include "mbed.h"
 #include "mbed_error.h"
 #include "ethers.h"
@@ -61,13 +62,13 @@ int get_auth_sig(privkey_t signer, address_t validator, uint8_t* data, size_t da
     return MBED_SUCCESS;
 }
 
-int generate_claim_code(privkey_t issuer_key, uint32_t nonce, char *claimcode) {
+int generate_claim_code(privkey_t issuer_key, address_t validator, uint32_t nonce, char *claimcode) {
     claimcode_t claim;
     privkey_t claimant_privkey;
     address_t claimant_address;
 
     // Copy the validator field into the claim code
-    memcpy(claim.validator, VALIDATOR_ADDRESS, sizeof(address_t));
+    memcpy(claim.validator, validator, sizeof(address_t));
 
     // Generate a claim seed
     int ret = rng(claim.claimseed, SEED_LENGTH);
@@ -96,6 +97,7 @@ int generate_claim_code(privkey_t issuer_key, uint32_t nonce, char *claimcode) {
 
     int claim_len = sizeof(claimcode_t) - 52 + claim.datalen;
     base32_encode((uint8_t*)&claim, claim_len, (uint8_t*)claimcode, CLAIMCODE_LEN);
+    printf("%s\n", claimcode);
 
     return MBED_SUCCESS;
 }
