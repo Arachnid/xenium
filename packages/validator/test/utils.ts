@@ -12,7 +12,7 @@ export async function getClone<F extends ContractFactory>(call: Promise<Contract
     if (receipt.events) {
         for (const event of receipt.events) {
             if (event.event === "Cloned") {
-                address = event?.args?.instance;
+                address = event ?.args ?.instance;
                 break;
             }
         }
