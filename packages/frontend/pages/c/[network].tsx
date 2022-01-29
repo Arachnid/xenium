@@ -1,19 +1,21 @@
 import { NextPage } from 'next'
 import Head from 'next/head'
 import { useEffect, useState } from 'react'
-import styles from '../styles/Home.module.css'
+import styles from '../../styles/Home.module.css'
 import { ClaimCode, buildClaim } from '@xenium-eth/xenium-js';
 import { Button } from 'antd';
 import { abi as IValidator_abi } from '@xenium-eth/validator/artifacts/contracts/IValidator.sol/IValidator.json';
 import { useContractFunction, useEthers } from '@usedapp/core';
 import { ethers } from 'ethers';
+import { Web3ModalButton } from '../../components/Web3ModalButton';
+import { useRouter } from 'next/router';
 
 const DEFAULT_VALIDATOR = "0x0000000000000000000000000000000000000000";
 const IValidator = new ethers.Contract(DEFAULT_VALIDATOR, IValidator_abi);
 
 const Home: NextPage = () => {
+  const router = useRouter();
   const [claimCode, setClaimCode] = useState<ClaimCode|undefined>(undefined);
-  console.log(claimCode);
   const { account } = useEthers();
   const { send } = useContractFunction(IValidator.attach(claimCode?.validator || DEFAULT_VALIDATOR), 'claim');
   useEffect(() => {
@@ -42,7 +44,7 @@ const Home: NextPage = () => {
         <title>Xenium Token Claim</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-
+      <Web3ModalButton network={router.query.network} />
       <main className={styles.main}>
         <h1 className={styles.title}>
           Token Claim
