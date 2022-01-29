@@ -44,7 +44,7 @@ const Home: NextPage = () => {
         <title>Xenium Token Claim</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <Web3ModalButton network={router.query.network} />
+      {router.query.network && <Web3ModalButton network={router.query.network as string} />}
       <main className={styles.main}>
         <h1 className={styles.title}>
           Token Claim
