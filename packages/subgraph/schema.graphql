@@ -1,8 +1,14 @@
+type Issuer @entity {
+  id: ID!
+  validators: [Validator!]! @derivedFrom(field: "issuers")
+  claims: [Claim!]! @derivedFrom(field: "issuer")
+}
+
 interface Validator {
   id: ID!
   factory: Bytes!
   owner: Bytes!
-  issuers: [Bytes!]!
+  issuers: [Issuer!]!
   claims: [Claim!]! @derivedFrom(field: "validator")
 }
 
@@ -10,7 +16,7 @@ type ERC20TransferUniqueNonceValidator implements Validator @entity {
   id: ID!
   factory: Bytes!
   owner: Bytes!
-  issuers: [Bytes!]!
+  issuers: [Issuer!]!
   claims: [Claim!]! @derivedFrom(field: "validator")
   token: Bytes!
   sender: Bytes!
@@ -20,7 +26,7 @@ type ERC20TransferUniqueNonceValidator implements Validator @entity {
 type Claim @entity {
   id: ID!
   validator: Validator!
-  issuer: Bytes!
+  issuer: Issuer!
   beneficiary: Bytes!
   data: Bytes!
   authsig: Bytes!

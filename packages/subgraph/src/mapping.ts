@@ -5,7 +5,7 @@ import {
   ClaimExecuted,
   IssuersAdded, IssuersRemoved
 } from "../generated/templates/ERC20TransferUniqueNonceValidator/ERC20TransferUniqueNonceValidator";
-import { Claim, ERC20TransferUniqueNonceValidator } from "../generated/schema"
+import { Claim, ERC20TransferUniqueNonceValidator, Issuer } from "../generated/schema"
 import { ERC20TransferUniqueNonceValidator as ERC20TransferUniqueNonceValidator_template } from "../generated/templates";
 import { Address, Bytes } from "@graphprotocol/graph-ts";
 
@@ -26,9 +26,11 @@ export function handleIssuersAdded(event: IssuersAdded): void {
   const entity = ERC20TransferUniqueNonceValidator.load(event.address.toHex()) as ERC20TransferUniqueNonceValidator;
   const issuers = entity.issuers;
   for(let i = 0; i < event.params.issuers.length; i++) {
-    const issuer = event.params.issuers[i];
-    if(!entity.issuers.includes(issuer)) {
-      issuers.push(issuer);
+    const issuerAddress = event.params.issuers[i].toHex();
+    if(!issuers.includes(issuerAddress)) {
+      const issuer = new Issuer(issuerAddress);
+      issuer.save();
+      issuers.push(issuer.id);
     }
   }
   entity.issuers = issuers;
@@ -37,10 +39,10 @@ export function handleIssuersAdded(event: IssuersAdded): void {
 
 export function handleIssuersRemoved(event: IssuersRemoved): void {
   const entity = ERC20TransferUniqueNonceValidator.load(event.address.toHex()) as ERC20TransferUniqueNonceValidator;
-  const issuers: Bytes[] = [];
+  const issuers: string[] = [];
   for(let i = 0; i < entity.issuers.length; i++) {
-    const issuer = entity.issuers[i] as Address;
-    if(!event.params.issuers.includes(issuer)) {
+    const issuer = entity.issuers[i];
+    if(!event.params.issuers.includes(Address.fromString(issuer))) {
       issuers.push(issuer);
     }
   }
@@ -49,9 +51,12 @@ export function handleIssuersRemoved(event: IssuersRemoved): void {
 }
 
 export function handleClaimExecuted(event: ClaimExecuted): void {
+  const issuer = new Issuer(event.params.issuer.toHex());
+  issuer.save();
+
   const entity = new Claim(event.params.claimId.toHex());
   entity.validator = event.address.toHex();
-  entity.issuer = event.params.issuer;
+  entity.issuer = issuer.id;
   entity.beneficiary = event.params.beneficiary;
   entity.data = event.params.data;
   entity.authsig = event.params.authsig;
