@@ -24,12 +24,14 @@ export function handleCloned(event: Cloned): void {
 
 export function handleIssuersAdded(event: IssuersAdded): void {
   const entity = ERC20TransferUniqueNonceValidator.load(event.address.toHex()) as ERC20TransferUniqueNonceValidator;
+  const issuers = entity.issuers;
   for(let i = 0; i < event.params.issuers.length; i++) {
     const issuer = event.params.issuers[i];
     if(!entity.issuers.includes(issuer)) {
-      entity.issuers.push(issuer);
+      issuers.push(issuer);
     }
   }
+  entity.issuers = issuers;
   entity.save();
 }
 
