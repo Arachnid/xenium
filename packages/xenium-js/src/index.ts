@@ -1,4 +1,3 @@
-import { Base32 } from '@ethersproject/basex';
 import { defaultAbiCoder } from '@ethersproject/abi';
 import { Signer } from '@ethersproject/abstract-signer';
 import { Contract } from '@ethersproject/contracts';
@@ -13,6 +12,76 @@ import { Interface } from "@ethersproject/abi";
 import { Logger } from '@ethersproject/logger';
 
 const logger = new Logger("shibboleth-js/0.1.0");
+
+const BASE32_AlPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+
+function base32Encode(data: Uint8Array): string {
+    let count = 0;
+    let result = new Uint8Array((data.length + 4) / 5 * 8);
+    if (data.length > 0) {
+        let buffer = data[0];
+        let next = 1;
+        let bitsLeft = 8;
+        while (bitsLeft > 0 || next < data.length) {
+            if (bitsLeft < 5) {
+                if (next < data.length) {
+                    buffer <<= 8;
+                    buffer |= data[next++] & 0xFF;
+                    bitsLeft += 8;
+                } else {
+                    let pad = 5 - bitsLeft;
+                    buffer <<= pad;
+                    bitsLeft += pad;
+                }
+            }
+            let index = 0x1F & (buffer >> (bitsLeft - 5));
+            bitsLeft -= 5;
+            result[count++] = BASE32_AlPHABET.charCodeAt(index);
+        }
+    }
+    return Buffer.from(result.slice(0, count)).toString();
+}
+
+function base32Decode(data: string): Uint8Array | undefined {
+    let buffer = 0;
+    let bitsLeft = 0;
+    let count = 0;
+    let result = new Uint8Array((data.length + 7) / 8 * 5);
+    for (let i = 0; i < data.length; i++) {
+        let ch = data[i];
+        if (ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n' || ch == '-') {
+            continue;
+        }
+        buffer <<= 5;
+
+        // Deal with commonly mistyped characters
+        if (ch == '0') {
+            ch = 'O';
+        } else if (ch == '1') {
+            ch = 'L';
+        } else if (ch == '8') {
+            ch = 'B';
+        }
+
+        // Look up one base32 digit
+        let byte = 0;
+        if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z')) {
+            byte = (ch.charCodeAt(0) & 0x1F) - 1;
+        } else if (ch >= '2' && ch <= '7') {
+            byte = ch.charCodeAt(0) - 24;
+        } else {
+            return undefined;
+        }
+
+        buffer |= byte;
+        bitsLeft += 5;
+        if (bitsLeft >= 8) {
+            result[count++] = buffer >> (bitsLeft - 8);
+            bitsLeft -= 8;
+        }
+    }
+    return result.slice(0, count);
+}
 
 function rleZeros(data: Uint8Array): Uint8Array {
     const bytes = [];
@@ -72,7 +141,10 @@ export class ClaimCode {
     }
 
     static fromString(str: string): ClaimCode {
-        const dataArray = Base32.decode(str.toLowerCase());
+        const dataArray = base32Decode(str);
+        if(dataArray === undefined) {
+            return logger.throwError("Invalid base32 encoded data", Logger.errors.INVALID_ARGUMENT, { str });
+        }
         if (dataArray.length < 100) {
             return logger.throwError("Claim code too short", Logger.errors.INVALID_ARGUMENT, { length: dataArray.length });
         }
@@ -84,7 +156,7 @@ export class ClaimCode {
     }
 
     toString(): string {
-        return Base32.encode(concat([this.validator, this.claimseed, this.authsig, rleZeros(this.data)])).toUpperCase();
+        return base32Encode(concat([this.validator, this.claimseed, this.authsig, rleZeros(this.data)]));
     }
 
     _recoverIssuer(): string {

@@ -52,7 +52,6 @@ describe('buildClaim', () => {
 
         // Get a claim code
         const claimCodeString = issuer.makeClaimCode().toString();
-        console.log(claimCodeString);
         const claimCode = ClaimCode.fromString(claimCodeString);
 
         // Figure out the address for the ephemeral claimant key

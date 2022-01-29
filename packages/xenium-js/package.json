@@ -54,7 +54,6 @@
   },
   "dependencies": {
     "@ethersproject/abi": "^5.5.0",
-    "@ethersproject/basex": "^5.5.0",
     "@ethersproject/bytes": "^5.5.0",
     "@ethersproject/keccak256": "^5.5.0",
     "@ethersproject/logger": "^5.5.0",
