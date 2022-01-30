@@ -33,10 +33,9 @@ interface IValidator is IERC165 {
      * @param issuer The address of the issuer.
      * @param claimant The account that is entitled to make the claim.
      * @param data Claim data provided by the issuer.
-     * @return A URL that resolves to JSON metadata as described in the spec.
-     *         Callers must support at least 'data' and 'https' schemes.
+     * @return CBOR-encoded metadata as described in the spec.
      */
-    function metadata(address issuer, address claimant, bytes calldata data) external view returns(string memory);
+    function metadata(address issuer, address claimant, bytes calldata data) external view returns(bytes memory);
     
     event ClaimExecuted(bytes32 indexed claimId, address indexed issuer, address beneficiary, bytes data, bytes authsig, bytes claimsig);
 }

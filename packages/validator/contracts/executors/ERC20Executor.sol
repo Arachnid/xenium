@@ -6,12 +6,15 @@ import "@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/contracts/utils/Base64.sol";
 import "@openzeppelin/contracts/contracts/utils/Strings.sol";
+import "@ensdomains/buffer/contracts/Buffer.sol";
+import "solidity-cborutils/contracts/CBOR.sol";
 
 /**
  * @dev A Validator mixin that sends ERC20 tokens from an allowance.
  */
 abstract contract ERC20Executor is BaseValidator {
     using Strings for uint256;
+    using CBOR for Buffer.buffer;
 
     function tokenInfo(bytes calldata data) public virtual view returns(address token, uint256 amount);
 
@@ -31,18 +34,28 @@ abstract contract ERC20Executor is BaseValidator {
             && super.isExecutable(issuer, claimant, data);
     }
 
-    function metadata(address /*issuer*/, address /*claimant*/, bytes calldata claimData) public override virtual view returns(string memory) {
-        (address token, uint256 amount) = tokenInfo(claimData);
+    function metadata(address /*issuer*/, address /*claimant*/, bytes calldata claimData) public override virtual view returns(bytes memory) {
+        Buffer.buffer memory buf;
+        Buffer.init(buf, 256);
+
+        (address token,, uint256 amount) = tokenInfo(claimData);
         string memory symbol = IERC20Metadata(token).symbol();
 
-        return string(abi.encodePacked(
-            "{\"valid\":true,\"data\":{\"title\": \"$",
-            symbol,
-            " token transfer\", \"tokentype\":20,\"token\":\"",
-            uint256(uint160(token)).toHexString(20),
-            "\",\"amount\":\"",
-            amount.toString(),
-            "\"}}"
-        ));
+        buf.startMap();
+        buf.encodeString("valid");
+        buf.encodeInt(1);
+        buf.encodeString("data");
+        buf.startMap();
+        buf.encodeString("title");
+        buf.encodeString(string(abi.encodePacked("$", symbol, " token transfer")));
+        buf.encodeString("token");
+        buf.encodeString(uint256(uint160(token)).toHexString(20));
+        buf.encodeString("tokentype");
+        buf.encodeUInt(20);
+        buf.encodeString("amount");
+        buf.encodeString(amount.toString());
+        buf.endSequence();
+        buf.endSequence();
+        return buf.buf;
     }
 }
