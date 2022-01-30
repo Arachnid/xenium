@@ -70,7 +70,7 @@ export function erc721TransferExecutor(getArgs: () => Args) {
                 expect(metadata.data.tokenids[0]).to.equal('1');
             });
 
-            it('updated token id in metadata after a valid claim', async () => {
+            it('updates token id in metadata after a valid claim', async () => {
                 const claim = buildClaim(accounts[1].address, issuer.makeClaimCode());
                 const tx = await validator.claim(...claim);
                 const receipt = await tx.wait();
