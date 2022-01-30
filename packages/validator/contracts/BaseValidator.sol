@@ -19,13 +19,7 @@ abstract contract BaseValidator is IValidator, ERC165 {
         emit ClaimExecuted(keccak256(authsig), issuer, beneficiary, data, authsig, claimsig);
     }
 
-    function metadata(address issuer, address /*claimant*/, bytes calldata /*data*/) public virtual override view returns(string memory) {
-        if(!isIssuer(issuer)) {
-            return string(abi.encodePacked(
-                "data:application/json;base64,",
-                Base64.encode("{\"valid\":false,\"error\":\"Invalid issuer.\"}")
-            ));
-        }
-        return "";
+    function isExecutable(address issuer, address /*claimant*/, bytes calldata /*data*/) public virtual view returns(bool) {
+        return isIssuer(issuer);
     }
 }

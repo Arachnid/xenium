@@ -38,14 +38,15 @@ export function erc20TransferExecutor(getArgs: ()=>Args) {
             });
         });
 
-        describe('metadata()', () => {
-            it('returns an error if the allowance is insufficient', async () => {
+        describe('isExecutable()', () => {
+            it('returns false if the allowance is insufficient', async () => {
                 await token.approve(validator.address, 0);
-                const metadata = parseMetadata(await validator.metadata(issuerAddress, accounts[1].address, issuer.makeClaimCode().data));
-                expect(metadata.valid).to.be.false;
-                expect(metadata.error).to.equal('Insufficient balance.');
+                const claimCode = issuer.makeClaimCode();
+                expect(await validator.isExecutable(issuerAddress, claimCode.claimant, claimCode.data)).to.equal(false);
             });
+        });
 
+        describe('metadata()', () => {
             it('returns token metadata for a valid claim', async () => {
                 const metadata = parseMetadata(await validator.metadata(issuerAddress, accounts[1].address, issuer.makeClaimCode().data));
                 expect(metadata.valid).to.be.true;

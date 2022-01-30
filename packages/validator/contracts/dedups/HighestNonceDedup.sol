@@ -22,19 +22,8 @@ abstract contract HighestNonceDedup is BaseValidator {
         nonce[issuer] = claimNonce + 1;
     }
 
-    function metadata(address issuer, address claimant, bytes calldata claimData) public override virtual view returns(string memory) {
-        string memory ret = super.metadata(issuer, claimant, claimData);
-        if(bytes(ret).length > 0) {
-            return ret;
-        }
-
-        uint64 claimNonce = abi.decode(claimData, (uint64));
-        if(claimNonce < nonce[issuer]) {
-            return string(abi.encodePacked(
-                "data:application/json;base64,",
-                Base64.encode("{\"valid\":false,\"error\":\"Nonce too low.\"}")
-            ));
-        }
-        return "";
+    function isExecutable(address issuer, address claimant, bytes calldata data) public override view returns(bool) {
+        uint64 claimNonce = abi.decode(data, (uint64));
+        return claimNonce >= nonce[issuer] && super.isExecutable(issuer, claimant, data);
     }
 }

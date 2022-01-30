@@ -69,15 +69,13 @@ export function uniqueNonceDedup(getArgs: () => Args) {
             })
         });
 
-        describe('metadata()', () => {
-            it('returns an error for a reused nonce', async () => {
+        describe('isExecutable()', () => {
+            it('returns false for a reused nonce', async () => {
                 const issuer = new NonceIssuer(validator.address, issuerKey, 0);
                 const claimCode = issuer.makeClaimCode();
                 const claim = buildClaim(accounts[1].address, claimCode);
                 await (await validator.claim(...claim)).wait();
-                const metadata = parseMetadata(await validator.metadata(issuerAddress, accounts[1].address, claimCode.data));
-                expect(metadata.valid).to.be.false;
-                expect(metadata.error).to.equal('Nonce already used.');
+                expect(await validator.isExecutable(issuerAddress, claimCode.claimant, claimCode.data)).to.equal(false);
             })
         });
     });
