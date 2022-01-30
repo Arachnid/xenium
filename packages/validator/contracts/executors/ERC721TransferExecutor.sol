@@ -14,11 +14,16 @@ abstract contract ERC721TransferExecutor is BaseValidator {
     using Strings for uint256;
     uint256 public claimCounter;
 
+    error AllTokensClaimed();
+
     function tokenInfo(bytes calldata data) public virtual view returns(address token, address sender, uint256[] memory tokenids);
 
     function claim(address beneficiary, bytes calldata data, bytes calldata authsig, bytes calldata claimsig) public override virtual returns(address issuer, address claimant) {
         (issuer, claimant) = super.claim(beneficiary, data, authsig, claimsig);
         (address token, address sender, uint256[] memory tokenids) = tokenInfo(data);
+        if(claimCounter >= tokenids.length) {
+          revert AllTokensClaimed();
+        }
         uint256 tokenid = tokenids[claimCounter];
         claimCounter += 1;
         IERC721(token).safeTransferFrom(sender, beneficiary, tokenid);
@@ -37,6 +42,12 @@ abstract contract ERC721TransferExecutor is BaseValidator {
             return string(abi.encodePacked(
                 "data:application/json;base64,",
                 Base64.encode("{\"valid\":false,\"error\":\"Token not approved.\"}")
+            ));
+        }
+        if(claimCounter >= tokenids.length) {
+            return string(abi.encodePacked(
+                "data:application/json;base64,",
+                Base64.encode("{\"valid\":false,\"error\":\"All tokens have been claimed.\"}")
             ));
         }
         uint tokenid = tokenids[claimCounter];

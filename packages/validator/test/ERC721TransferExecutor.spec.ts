@@ -81,6 +81,22 @@ export function erc721TransferExecutor(getArgs: () => Args) {
                 expect(metadata.data.token).to.equal(token.address.toLowerCase());
                 expect(metadata.data.tokenids[0]).to.equal('2');
             });
+
+            it('returns an error if all tokens have been claimed', async () => {
+                // first claim
+                const claim1 = buildClaim(accounts[1].address, issuer.makeClaimCode());
+                const tx1 = await validator.claim(...claim1);
+                const receipt1 = await tx1.wait();
+
+                // second claim
+                const claim2 = buildClaim(accounts[2].address, issuer.makeClaimCode());
+                const tx2 = await validator.claim(...claim2);
+                const receipt2 = await tx2.wait();
+
+                const metadata = parseMetadata(await validator.metadata(issuerAddress, accounts[1].address, issuer.makeClaimCode().data));
+                expect(metadata.valid).to.be.false;
+                expect(metadata.error).to.equal('All tokens have been claimed.');
+            });
         });
     });
 }
