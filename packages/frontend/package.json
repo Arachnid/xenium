@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "cd ../xenium-js && yarn build && cd ../validator && yarn build",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
