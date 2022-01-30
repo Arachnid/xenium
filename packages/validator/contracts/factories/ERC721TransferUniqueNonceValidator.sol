@@ -31,10 +31,12 @@ contract ERC721TransferUniqueNonceValidator is UniqueNonceDedup, IssuerWhitelist
         return _getArgAddress(20);
     }
 
-    function tokenInfo(bytes calldata /*data*/) public virtual override view returns(address token, address sender) {
-      return (_getArgAddress(40), _getArgAddress(60));
+    function tokenInfo(bytes calldata /*data*/) public virtual override view returns(address token, address sender, uint256[] memory tokenids) {
+      uint64 arraylength = _getArgUint64(80);
+      tokenids = _getArgUint256Array(88, arraylength);    
+      return (_getArgAddress(40), _getArgAddress(60), tokenids);
     }
-
+    
     function claim(address beneficiary, bytes calldata data, bytes calldata authsig, bytes calldata claimsig) public override(UniqueNonceDedup, ERC721TransferExecutor, BaseValidator) delegatecallOnly returns(address issuer, address claimant) {
         return super.claim(beneficiary, data, authsig, claimsig);
     }
@@ -55,8 +57,8 @@ contract ERC721TransferUniqueNonceValidatorFactory {
         implementation = new ERC721TransferUniqueNonceValidator();
     }
 
-    function create(uint256 nonce, address owner, address token, address sender, address[] memory issuers) external returns(ERC721TransferUniqueNonceValidator) {
-        bytes memory data = abi.encodePacked(address(this), owner, token, sender);
+    function create(uint256 nonce, address owner, address token, address sender, uint256[] memory tokenids, address[] memory issuers) external returns(ERC721TransferUniqueNonceValidator) {
+      bytes memory data = abi.encodePacked(address(this), owner, token, sender, uint64(tokenids.length), tokenids);
         ERC721TransferUniqueNonceValidator instance = ERC721TransferUniqueNonceValidator(address(implementation).clone(data));
         instance.addIssuers(issuers);
         emit Cloned(msg.sender, nonce, address(instance), owner, token, sender);

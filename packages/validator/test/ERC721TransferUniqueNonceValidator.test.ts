@@ -10,6 +10,7 @@ import { getClone, parseMetadata } from "./utils";
 import { issuerWhitelistAuth } from "./IssuerWhitelistAuth.spec";
 import { uniqueNonceDedup } from "./UniqueNonceDedup.spec";
 import { baseValidator } from "./BaseValidator.spec";
+import { defaultAbiCoder } from '@ethersproject/abi';
 
 describe('ERC721TransferUniqueNonceValidator', () => {
     let accounts: SignerWithAddress[];
@@ -31,7 +32,7 @@ describe('ERC721TransferUniqueNonceValidator', () => {
         const ERC721TransferUniqueNonceValidator = await ethers.getContractFactory("ERC721TransferUniqueNonceValidator");
         factory = await ERC721TransferUniqueNonceValidatorFactory.deploy();
         await factory.deployed();
-        validator = await getClone(factory.create(0, accounts[0].address, token.address, accounts[0].address, [issuerAddress]), ERC721TransferUniqueNonceValidator);
+        validator = await getClone(factory.create(0, accounts[0].address, token.address, accounts[0].address, [1, 2], [issuerAddress]), ERC721TransferUniqueNonceValidator);
         await token.setApprovalForAll(validator.address, true);
     });
 
@@ -44,7 +45,7 @@ describe('ERC721TransferUniqueNonceValidator', () => {
     });
 
     it('gas usage report', async () => {
-        const tx = await factory.create(0, accounts[0].address, token.address, accounts[0].address, [issuerAddress])
+        const tx = await factory.create(0, accounts[0].address, token.address, accounts[0].address, [1, 2], [issuerAddress])
         const receipt = await tx.wait();
         console.log(`Clone: ${receipt.gasUsed}`);
 
