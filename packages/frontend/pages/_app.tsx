@@ -7,7 +7,6 @@ import { NETWORKS } from '../config';
 const config: Config = {
   readOnlyChainId: Rinkeby.chainId,
   readOnlyUrls: NETWORKS,
-  autoConnect: false,
 }
 
 function MyApp({ Component, pageProps }: AppProps) {
