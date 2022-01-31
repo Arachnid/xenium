@@ -32,16 +32,13 @@ abstract contract ERC20TransferExecutor is BaseValidator {
         string memory symbol = IERC20Metadata(token).symbol();
 
         return string(abi.encodePacked(
-            "data:application/json;base64,",
-            Base64.encode(abi.encodePacked(
-                "{\"valid\":true,\"data\":{\"title\": \"$",
-                symbol,
-                " token transfer\", \"tokentype\":20,\"token\":\"",
-                uint256(uint160(token)).toHexString(20),
-                "\",\"amount\":\"",
-                amount.toString(),
-                "\"}}"
-            ))
+            "{\"valid\":true,\"data\":{\"title\": \"$",
+            symbol,
+            " token transfer\", \"tokentype\":20,\"token\":\"",
+            uint256(uint160(token)).toHexString(20),
+            "\",\"amount\":\"",
+            amount.toString(),
+            "\"}}"
         ));
     }
 }
