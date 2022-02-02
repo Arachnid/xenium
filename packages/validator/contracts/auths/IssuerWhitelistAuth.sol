@@ -13,17 +13,6 @@ abstract contract IssuerWhitelistAuth is BaseValidator {
     event IssuersAdded(address[] issuers);
     event IssuersRemoved(address[] issuers);
 
-    error NotAuthorised();
-
-    function isOwner(address owner) public virtual view returns(bool);
-
-    modifier ownerOnly {
-        if(!isOwner(msg.sender)) {
-            revert NotAuthorised();
-        }
-        _;
-    }
-
     function isIssuer(address issuer) internal override virtual view returns(bool) {
         return issuers[issuer];
     }
