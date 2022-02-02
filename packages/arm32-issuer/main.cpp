@@ -70,7 +70,8 @@ uint8_t ROOT_OF_TRUST[] = {0x5b, 0x22, 0x26, 0xba, 0x20, 0x3d, 0x95, 0x1e, 0xfb,
 
 typedef struct {
     char magic_number[8];       // Identifies if this device has been initialised
-    uint8_t validator[20];      // Address of the validator contract
+    address_t validator;        // Address of the validator contract
+    address_t issuer;           // This issuer's address
     char url_string[32];        // URL prefix. Null terminated if <32 chars.
     uint32_t claim_interval;    // Interval between claim codes (seconds).
     uint32_t claim_count;       // Max number of claims that can be 'in the bucket'
@@ -79,8 +80,8 @@ typedef struct {
 const config_t DEFAULT_CONFIG = {
     "XENI001",
     {134, 171, 197, 31, 186, 241, 52, 24, 170, 185, 255, 241, 178, 77, 154, 85, 123, 49, 220, 185},
-    // {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    "\x04xenium.link/#/",
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    "\x04xenium.link/mainnet/c#",
     1,
     1
 };
@@ -174,21 +175,33 @@ int write_empty_ndef(void) {
 }
 
 void initialize_device() {
+    // Authenticate with the eeprom for settings access
+    int ret = st25.unlock(0);
+    if(ret != 0) {
+        MBED_ERROR(MBED_ERROR_FAILED_OPERATION, "Unlocking registers");
+    }
+
     st25.read((uint8_t*)&config, sizeof(config), CONFIG_ADDRESS);
     if(memcmp(config.magic_number, DEFAULT_CONFIG.magic_number, sizeof(DEFAULT_CONFIG.magic_number)) != 0) {
+        // Delete issuer key and nonce if they exist
+        ret = reset_store();
+        if(ret != MBED_SUCCESS) {
+            MBED_ERROR(ret, "Resetting datastore");
+        }
+
         // Initialise with default config
         memcpy((uint8_t*)&config, &DEFAULT_CONFIG, sizeof(DEFAULT_CONFIG));
 
-        // Format the NDEF part of the memory
-        int ret = st25.format(MLEN, true /* readonly */, true /* mbread */);
+        // Set up devicekey
+        ret = DeviceKey::get_instance().device_inject_root_of_trust((uint32_t*)ROOT_OF_TRUST, sizeof(ROOT_OF_TRUST));
         if(ret != 0) {
-            MBED_ERROR(MBED_ERROR_FAILED_OPERATION, "Formatting EEPROM");
+            MBED_ERROR(ret, "Setting root of trust");
         }
 
-        // Authenticate with the eeprom for settings access
-        ret = st25.unlock(0);
+        // Format the NDEF part of the memory
+        ret = st25.format(MLEN, true /* readonly */, true /* mbread */);
         if(ret != 0) {
-            MBED_ERROR(MBED_ERROR_FAILED_OPERATION, "Unlocking registers");
+            MBED_ERROR(MBED_ERROR_FAILED_OPERATION, "Formatting EEPROM");
         }
 
         // Write default register settings
@@ -229,24 +242,18 @@ void initialize_device() {
                 MBED_ERROR(MBED_ERROR_FAILED_OPERATION, "Writing ENDA1");
             }
         }
+    }
 
-        // Delete issuer key and nonce if they exist
-        ret = reset_store();
-        if(ret != MBED_SUCCESS) {
-            MBED_ERROR(ret, "Resetting datastore");
-        }
+    // Write the issuer address to the config
+    ret = get_issuer_address(config.issuer);
+    if(ret != MBED_SUCCESS) {
+        MBED_ERROR(ret, "Resetting datastore");
+    }
 
-        // Write the config to storage
-        ret = write_config();
-        if(ret != 0) {
-            MBED_ERROR(MBED_ERROR_FAILED_OPERATION, "Writing default config");
-        }
-
-        // Set up devicekey
-        ret = DeviceKey::get_instance().device_inject_root_of_trust((uint32_t*)ROOT_OF_TRUST, sizeof(ROOT_OF_TRUST));
-        if(ret != 0) {
-            MBED_ERROR(ret, "Setting root of trust");
-        }
+    // Write the config to storage
+    ret = write_config();
+    if(ret != 0) {
+        MBED_ERROR(MBED_ERROR_FAILED_OPERATION, "Writing default config");
     }
 
     claims_left = 0;

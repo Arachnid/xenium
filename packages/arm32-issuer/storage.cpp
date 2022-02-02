@@ -28,6 +28,19 @@ int get_issuer_key(privkey_t privkey) {
     return ret;*/
 }
 
+int get_issuer_address(address_t address) {
+    privkey_t privkey;
+    int ret = get_issuer_key(privkey);
+    if(ret != MBED_SUCCESS) {
+        return ret;
+    }
+
+    if(!ethers_privateKeyToAddress(privkey, address)) {
+        return MBED_ERROR_FAILED_OPERATION;
+    }
+    return MBED_SUCCESS;
+}
+
 int get_stored_nonce(uint32_t *nonce) {
     size_t key_size;
     int ret = kv_get(NEXT_NONCE_KEY_PATH, nonce, sizeof(uint32_t), &key_size);
