@@ -2,13 +2,13 @@ import { useEthers } from "@usedapp/core";
 import { Radio } from "antd";
 import { NextPage } from "next";
 import { useState } from "react";
-import CreateERC20TransferUniqueNonceValidator from "./factories/CreateERC20TransferUniqueNonceValidator";
+import CreateERC20UniqueNonceValidator from "./factories/CreateERC20UniqueNonceValidator";
 import { Factory } from "./factories/IFactory";
 
 const FACTORIES: {[key: string]: {name: string, component: Factory}} = {
-  "0xB7D2dA8DE6D55d3Cac6491F5e58e87af0D21F2E6": {
-      name: "ERC20TransferUniqueNonceValidator",
-      component: CreateERC20TransferUniqueNonceValidator
+  "0x4c6e8825e9c914d512d61e65ebc25431d816212c": {
+      name: "ERC20UniqueNonceValidator",
+      component: CreateERC20UniqueNonceValidator
   }
 };
 

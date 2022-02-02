@@ -2,19 +2,18 @@ import { Button, Form, Input } from "antd";
 import { ethers } from "ethers";
 import { NextPage } from "next";
 import { Factory } from "./IFactory";
-import ERC20TransferUniqueNonceValidatorFactory_abi from '@xenium-eth/validator/artifacts/contracts/factories/ERC20TransferUniqueNonceValidator.sol/ERC20TransferUniqueNonceValidatorFactory.json';
+import ERC20UniqueNonceValidatorFactory_abi from '@xenium-eth/validator/artifacts/contracts/factories/ERC20UniqueNonceValidator.sol/ERC20UniqueNonceValidatorFactory.json';
 import { useContractFunction, useEthers } from "@usedapp/core";
 
-const CreateERC20TransferUniqueNonceValidator: Factory = (props) => {
+const CreateERC20UniqueNonceValidator: Factory = (props) => {
   const { account } = useEthers();
-  const contract = new ethers.Contract(props.factory, ERC20TransferUniqueNonceValidatorFactory_abi.abi);
+  const contract = new ethers.Contract(props.factory, ERC20UniqueNonceValidatorFactory_abi.abi);
   const { send } = useContractFunction(contract, 'create');
   const onFinish = async (values: {token: string, amount: string}) => {
     const args = [
       1,
       account,
       values.token,
-      account,
       ethers.BigNumber.from(values.amount),
       props.issuers,
     ];
@@ -48,4 +47,4 @@ const CreateERC20TransferUniqueNonceValidator: Factory = (props) => {
   </Form >);
 }
 
-export default CreateERC20TransferUniqueNonceValidator;
+export default CreateERC20UniqueNonceValidator;
