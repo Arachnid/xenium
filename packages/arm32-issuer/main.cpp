@@ -1,10 +1,13 @@
 #include "EventQueue.h"
 #include "Kernel.h"
+#include "ThisThread.h"
 #include "cmsis_os2.h"
+#include "kv_config.h"
 #include "mbed.h"
 #include "mbed_error.h"
 #include "mbed_events.h"
 #include "mbed_shared_queues.h"
+#include "DeviceKey.h"
 
 #include <chrono>
 #include <cstring>
@@ -14,7 +17,6 @@
 #include "base32.h"
 #include "types.h"
 #include "helpers.h"
-#include "rng.h"
 #include "config.h"
 #include "storage.h"
 #include "claims.h"
@@ -55,15 +57,16 @@
  * read access, and write access with RF password 0. This password defaults to 0, but can be updated over RF.
  */
 
+uint8_t ROOT_OF_TRUST[] = {0x5b, 0x22, 0x26, 0xba, 0x20, 0x3d, 0x95, 0x1e, 0xfb, 0x88, 0x20, 0xb8, 0x6f, 0x6b, 0x72, 0x61};
+
 #define EEPROM_END_OF_MEM 0xF
 #define ENDA1 0xB // End of first data area (11 * 32 + 31 = byte 383)
 #define MLEN 32 // 32 * 8 byte words (256 bytes)
 #define CONFIG_ADDRESS 0x1A0
 #define ACTIVE_TIMEOUT chrono::duration<uint32_t,std::milli>(1000) // milliseconds to wait after tag becomes active before starting a new write
 
-#define FLAG_BUTTON_PRESSED 0x1
-#define FLAG_GPO_INTERRUPT 0x2
-#define FLAGS_ALL (FLAG_BUTTON_PRESSED | FLAG_GPO_INTERRUPT)
+#define FLAG_GPO_INTERRUPT 0x1
+#define FLAGS_ALL FLAG_GPO_INTERRUPT
 
 typedef struct {
     char magic_number[8];       // Identifies if this device has been initialised
@@ -77,7 +80,7 @@ const config_t DEFAULT_CONFIG = {
     "XENI001",
     {134, 171, 197, 31, 186, 241, 52, 24, 170, 185, 255, 241, 178, 77, 154, 85, 123, 49, 220, 185},
     // {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    "\x04xenium.link/mainnet/c#",
+    "\x04xenium.link/#/",
     1,
     1
 };
@@ -99,7 +102,6 @@ uint8_t EEPROM_REGISTER_INIT[][2] = {
 
 int write_claim_code(void);
 
-InterruptIn button(BUTTON);
 InterruptIn gpo(D12, PullUp);
 ST25 st25(D14, D15);
 EventFlags event_flags;
@@ -231,7 +233,7 @@ void initialize_device() {
         // Delete issuer key and nonce if they exist
         ret = reset_store();
         if(ret != MBED_SUCCESS) {
-            MBED_ERROR(MBED_ERROR_FAILED_OPERATION, "Resetting datastore");
+            MBED_ERROR(ret, "Resetting datastore");
         }
 
         // Write the config to storage
@@ -239,14 +241,16 @@ void initialize_device() {
         if(ret != 0) {
             MBED_ERROR(MBED_ERROR_FAILED_OPERATION, "Writing default config");
         }
+
+        // Set up devicekey
+        ret = DeviceKey::get_instance().device_inject_root_of_trust((uint32_t*)ROOT_OF_TRUST, sizeof(ROOT_OF_TRUST));
+        if(ret != 0) {
+            MBED_ERROR(ret, "Setting root of trust");
+        }
     }
 
     claims_left = 0;
     claims_last_updated = Kernel::Clock::now();
-}
-
-void handle_button_press(void) {
-    event_flags.set(FLAG_BUTTON_PRESSED);
 }
 
 void handle_gpo(void) {
@@ -287,9 +291,18 @@ struct next_state_t state_reinitialize() {
 
 struct next_state_t state_write_tag() {
     printf("State: WRITE_TAG\n");
-    st25.write_dynamic_register(ST25_RF_SLEEP, ST25_DYN_RF_MNGT);
-    write_claim_code();
-    st25.write_dynamic_register(0, ST25_DYN_RF_MNGT);
+    int ret = st25.write_dynamic_register(ST25_RF_SLEEP, ST25_DYN_RF_MNGT);
+    if(ret != MBED_SUCCESS) {
+        MBED_ERROR(MBED_ERROR_FAILED_OPERATION, "RF sleep");
+    }
+    ret = write_claim_code();
+    if(ret != MBED_SUCCESS) {
+        MBED_ERROR(ret, "Writing claim code");
+    }
+    ret = st25.write_dynamic_register(0, ST25_DYN_RF_MNGT);
+    if(ret != MBED_SUCCESS) {
+        MBED_ERROR(MBED_ERROR_FAILED_OPERATION, "RF wake");
+    }
     return {&state_idle};
 }
 
@@ -304,7 +317,7 @@ struct next_state_t state_delay() {
 
     // Wait until the end of the delay
     std::chrono::time_point<Kernel::Clock> wait_until = claims_last_updated + config.claim_interval * 1s;
-    event_flags.wait_any_until(FLAG_BUTTON_PRESSED, wait_until);
+    ThisThread::sleep_until(wait_until);
 
     // Clear any interrupts that happened while we were waiting
     st25.read_dynamic_register(ST25_DYN_IT_STS);
@@ -323,8 +336,8 @@ struct next_state_t state_active() {
             return {&state_reinitialize};
         }
         
-        int flags = event_flags.wait_any_for(FLAGS_ALL, ACTIVE_TIMEOUT);
-        if((flags == osFlagsErrorTimeout) || (flags & FLAG_BUTTON_PRESSED)) {
+        int flags = event_flags.wait_any_for(FLAG_GPO_INTERRUPT, ACTIVE_TIMEOUT);
+        if(flags == osFlagsErrorTimeout) {
             if(claims_left > 0) {
                 return {&state_write_tag};
             } else {
@@ -338,19 +351,16 @@ struct next_state_t state_active() {
 
 struct next_state_t state_idle() {
     printf("State: IDLE\n");
-    int flags = event_flags.wait_any(FLAGS_ALL);
-    update_claim_counter();    
-    if(flags & (FLAG_BUTTON_PRESSED | FLAG_GPO_INTERRUPT)) {
-        return {&state_active};
-    }
-    return {&state_idle};
+    int flags = event_flags.wait_any(FLAG_GPO_INTERRUPT);
+    update_claim_counter();
+    return {&state_active};
 }
 
 int main() {
-    rng_init();
+    // rng_init();
+    kv_init_storage_config();
     initialize_device();
     gpo.rise(handle_gpo);
-    button.fall(handle_button_press);
 
     struct next_state_t state = {&state_delay};
     while(true) {

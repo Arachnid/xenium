@@ -6,7 +6,7 @@
 #include "base32.h"
 #include "types.h"
 #include "config.h"
-#include "rng.h"
+#include "DeviceKey.h"
 
 /**
  * RLE-encodes zero bytes in 'data', outputting the result to 'ret'.
@@ -71,7 +71,7 @@ int generate_claim_code(privkey_t issuer_key, address_t validator, uint32_t nonc
     memcpy(claim.validator, validator, sizeof(address_t));
 
     // Generate a claim seed
-    int ret = rng(claim.claimseed, SEED_LENGTH);
+    int ret = DeviceKey::get_instance().generate_derived_key((uint8_t*)&nonce, sizeof(nonce), claim.claimseed, SEED_LENGTH);
     if(ret != MBED_SUCCESS) {
         return ret;
     }

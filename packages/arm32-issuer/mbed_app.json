@@ -1,10 +1,15 @@
 {
     "target_overrides": {
-        "*": {
-            "storage.storage_type": "TDB_INTERNAL",
-            "storage_tdb_internal.internal_size": "0x1000",
-            "target.components_add": ["FLASHIAP"],
+        "NUCLEO_L443RC_P": {
             "target.clock_source": "USE_PLL_MSI",
+            "storage.storage_type": "TDB_INTERNAL",
+            "storage_tdb_internal.internal_size": "0x1000"
+        },
+        "NUCLEO_F401RE": {
+
+        },
+        "*": {
+            "target.components_add": ["FLASHIAP"],
             "platform.callback-nontrivial": true,
             "rtos.main-thread-stack-size": 8192
         }
