@@ -20,6 +20,15 @@ interface IValidator is IERC165 {
     function claim(address beneficiary, bytes calldata data, bytes calldata authsig, bytes calldata claimsig) external returns(address issuer, address claimant);
 
     /**
+     * @dev Indicates if a claim can be executed or not.
+     * @param issuer The address of the issuer.
+     * @param claimant The account that is entitled to make the claim.
+     * @param data Claim data provided by the issuer.
+     * @return True iff a call to claim() would succeed, false otherwise.
+     */
+    function isExecutable(address issuer, address claimant, bytes calldata data) external view returns(bool);
+
+    /**
      * @dev Returns metadata explaining a claim.
      * @param issuer The address of the issuer.
      * @param claimant The account that is entitled to make the claim.

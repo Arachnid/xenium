@@ -35,11 +35,15 @@ contract ERC20TransferUniqueNonceValidator is UniqueNonceDedup, IssuerWhitelistA
         return (_getArgAddress(40), _getArgAddress(60), _getArgUint256(80));
     }
 
+    function isExecutable(address issuer, address claimant, bytes calldata data) public override(ERC20TransferExecutor, UniqueNonceDedup, BaseValidator) virtual view returns(bool) {
+        return super.isExecutable(issuer, claimant, data);
+    }
+
     function claim(address beneficiary, bytes calldata data, bytes calldata authsig, bytes calldata claimsig) public override(UniqueNonceDedup, ERC20TransferExecutor, BaseValidator) delegatecallOnly returns(address issuer, address claimant) {
         return super.claim(beneficiary, data, authsig, claimsig);
     }
 
-    function metadata(address issuer, address claimant, bytes calldata claimData) public override(UniqueNonceDedup, ERC20TransferExecutor, BaseValidator) virtual view returns(string memory) {
+    function metadata(address issuer, address claimant, bytes calldata claimData) public override(ERC20TransferExecutor, IValidator) virtual view returns(string memory) {
         return super.metadata(issuer, claimant, claimData);
     }
 }

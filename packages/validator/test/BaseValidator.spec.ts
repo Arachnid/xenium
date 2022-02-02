@@ -25,9 +25,22 @@ export function baseValidator(getArgs: () => Args) {
     });
 
     describe('BaseValidator', () => {
+        describe('isExecutable()', () => {
+            it('should return true if the issuer is authorised', async () => {
+                const claimCode = issuer.makeClaimCode();
+                expect(await validator.isExecutable(issuerAddress, claimCode.claimant, claimCode.data)).to.equal(true);
+            });
+
+            it('should return false if the issuer is not authorised', async () => {
+                const nonIssuerKey = new ethers.utils.SigningKey(ethers.utils.randomBytes(32));
+                const nonIssuer = new NonceIssuer(validator.address, nonIssuerKey, 0);
+                const claimCode = nonIssuer.makeClaimCode();
+                expect(await validator.isExecutable(ethers.utils.computeAddress(nonIssuerKey.privateKey), claimCode.claimant, claimCode.data)).to.equal(false);
+            });
+        });
+
         describe('claim()', () => {
             it('should emit ClaimExecuted', async () => {
-                const issuer = new NonceIssuer(validator.address, issuerKey, 0);
                 const claim = buildClaim(accounts[1].address, issuer.makeClaimCode());
                 const receipt = await (await validator.claim(...claim)).wait();
                 if(receipt.events === undefined) return expect(receipt.events).to.not.be.undefined;

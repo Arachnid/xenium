@@ -23,18 +23,8 @@ abstract contract SingleClaimantDedup is BaseValidator {
         }
         claimants[claimant] = beneficiary;
     }
-
-    function metadata(address issuer, address claimant, bytes calldata claimData) public override virtual view returns(string memory) {
-      string memory ret = super.metadata(issuer, claimant, claimData);
-      if(bytes(ret).length > 0) {
-        return ret;
-      }
-      if(claimants[claimant] != address(0)) {
-        return string(abi.encodePacked(
-                                       "data:application/json;base64,",
-                                       Base64.encode("{\"valid\":false,\"error\":\"Code already claimed..\"}")
-                                       ));
-      }
-      return "";
-    }    
+  
+    function isExecutable(address issuer, address claimant, bytes calldata data) public override view returns(bool) {
+        return claimants[claimant] == address(0) && super.isExecutable(issuer, claimant, data);
+    }
 }

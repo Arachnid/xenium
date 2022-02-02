@@ -21,33 +21,24 @@ abstract contract ERC20TransferExecutor is BaseValidator {
         require(IERC20(token).transferFrom(sender, beneficiary, amount), "Transfer failed");
     }
 
-    function metadata(address issuer, address claimant, bytes calldata claimData) public override virtual view returns(string memory) {
-        string memory ret = super.metadata(issuer, claimant, claimData);
-        if(bytes(ret).length > 0) {
-            return ret;
-        }
-
-        (address token, address sender, uint256 amount) = tokenInfo(claimData);
+    function isExecutable(address issuer, address claimant, bytes calldata data) public override virtual view returns(bool) {
+        (address token, address sender, uint256 amount) = tokenInfo(data);
         uint256 allowance = IERC20(token).allowance(sender, address(this));
+        return allowance >= amount && super.isExecutable(issuer, claimant, data);
+    }
+
+    function metadata(address /*issuer*/, address /*claimant*/, bytes calldata claimData) public override virtual view returns(string memory) {
+        (address token,, uint256 amount) = tokenInfo(claimData);
         string memory symbol = IERC20Metadata(token).symbol();
-        if(allowance < amount) {
-            return string(abi.encodePacked(
-                "data:application/json;base64,",
-                Base64.encode("{\"valid\":false,\"error\":\"Insufficient balance.\"}")
-            ));
-        }
 
         return string(abi.encodePacked(
-            "data:application/json;base64,",
-            Base64.encode(abi.encodePacked(
-                "{\"valid\":true,\"data\":{\"title\": \"$",
-                symbol,
-                " token transfer\", \"tokentype\":20,\"token\":\"",
-                uint256(uint160(token)).toHexString(20),
-                "\",\"amount\":\"",
-                amount.toString(),
-                "\"}}"
-            ))
+            "{\"valid\":true,\"data\":{\"title\": \"$",
+            symbol,
+            " token transfer\", \"tokentype\":20,\"token\":\"",
+            uint256(uint160(token)).toHexString(20),
+            "\",\"amount\":\"",
+            amount.toString(),
+            "\"}}"
         ));
     }
 }

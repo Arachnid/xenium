@@ -29,19 +29,8 @@ abstract contract UniqueNonceDedup is BaseValidator {
         return nonces[issuer].get(_nonce);
     }
 
-    function metadata(address issuer, address claimant, bytes calldata claimData) public override virtual view returns(string memory) {
-        string memory ret = super.metadata(issuer, claimant, claimData);
-        if(bytes(ret).length > 0) {
-            return ret;
-        }
-
-        uint256 claimNonce = abi.decode(claimData, (uint256));
-        if(nonces[issuer].get(claimNonce)) {
-            return string(abi.encodePacked(
-                "data:application/json;base64,",
-                Base64.encode("{\"valid\":false,\"error\":\"Nonce already used.\"}")
-            ));
-        }
-        return "";
+    function isExecutable(address issuer, address claimant, bytes calldata data) public override virtual view returns(bool) {
+        uint64 claimNonce = abi.decode(data, (uint64));
+        return !nonces[issuer].get(claimNonce) && super.isExecutable(issuer, claimant, data);
     }
 }

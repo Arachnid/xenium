@@ -44,18 +44,6 @@ export function issuerWhitelistAuth(getArgs: () => Args) {
             });
         });
 
-        describe('metadata()', () => {
-            it('returns an error for an invalid issuer', async () => {
-                const nonIssuerKey = new ethers.utils.SigningKey(ethers.utils.randomBytes(32));
-                const nonIssuerAddress = ethers.utils.computeAddress(nonIssuerKey.privateKey);
-                const nonIssuer = new NonceIssuer(validator.address, nonIssuerKey, 0);
-                const claimCode = nonIssuer.makeClaimCode();
-                const metadata = parseMetadata(await validator.metadata(nonIssuerAddress, accounts[1].address, claimCode.data));
-                expect(metadata.valid).to.be.false;
-                expect(metadata.error).to.equal('Invalid issuer.');
-            });
-        });
-
         describe('addIssuer()', () => {
             it('allows the owner to add issuers', async () => {
                 const receipt = await (await validator.addIssuers([accounts[0].address])).wait();
