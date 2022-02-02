@@ -1,29 +1,28 @@
 import {
   Cloned
-} from "../generated/ERC20TransferUniqueNonceValidatorFactory/ERC20TransferUniqueNonceValidatorFactory"
+} from "../generated/ERC20UniqueNonceValidatorFactory/ERC20UniqueNonceValidatorFactory"
 import {
   ClaimExecuted,
   IssuersAdded, IssuersRemoved
-} from "../generated/templates/ERC20TransferUniqueNonceValidator/ERC20TransferUniqueNonceValidator";
-import { Claim, ERC20TransferUniqueNonceValidator, Issuer } from "../generated/schema"
-import { ERC20TransferUniqueNonceValidator as ERC20TransferUniqueNonceValidator_template } from "../generated/templates";
+} from "../generated/templates/ERC20UniqueNonceValidator/ERC20UniqueNonceValidator";
+import { Claim, ERC20UniqueNonceValidator, Issuer } from "../generated/schema"
+import { ERC20UniqueNonceValidator as ERC20UniqueNonceValidator_template } from "../generated/templates";
 import { Address, Bytes } from "@graphprotocol/graph-ts";
 
 export function handleCloned(event: Cloned): void {
-  const entity = new ERC20TransferUniqueNonceValidator(event.params.instance.toHex());
+  const entity = new ERC20UniqueNonceValidator(event.params.instance.toHex());
   entity.factory = event.address;
   entity.owner = event.params.owner;
   entity.issuers = [];
   entity.token = event.params.token;
-  entity.sender = event.params.sender;
   entity.amount = event.params.amount;
   entity.save()
 
-  ERC20TransferUniqueNonceValidator_template.create(event.params.instance);
+  ERC20UniqueNonceValidator_template.create(event.params.instance);
 }
 
 export function handleIssuersAdded(event: IssuersAdded): void {
-  const entity = ERC20TransferUniqueNonceValidator.load(event.address.toHex()) as ERC20TransferUniqueNonceValidator;
+  const entity = ERC20UniqueNonceValidator.load(event.address.toHex()) as ERC20UniqueNonceValidator;
   const issuers = entity.issuers;
   for(let i = 0; i < event.params.issuers.length; i++) {
     const issuerAddress = event.params.issuers[i].toHex();
@@ -38,7 +37,7 @@ export function handleIssuersAdded(event: IssuersAdded): void {
 }
 
 export function handleIssuersRemoved(event: IssuersRemoved): void {
-  const entity = ERC20TransferUniqueNonceValidator.load(event.address.toHex()) as ERC20TransferUniqueNonceValidator;
+  const entity = ERC20UniqueNonceValidator.load(event.address.toHex()) as ERC20UniqueNonceValidator;
   const issuers: string[] = [];
   for(let i = 0; i < entity.issuers.length; i++) {
     const issuer = entity.issuers[i];

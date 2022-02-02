@@ -5,7 +5,7 @@
   "scripts": {
     "codegen": "graph codegen",
     "build": "graph build",
-    "deploy": "graph deploy --node https://api.studio.thegraph.com/deploy/ xenium",
+    "deploy": "graph deploy --product hosted-service arachnid/xeniumRinkeby",
     "create-local": "graph create --node http://localhost:8020/ xenium",
     "remove-local": "graph remove --node http://localhost:8020/ xenium",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 xenium"

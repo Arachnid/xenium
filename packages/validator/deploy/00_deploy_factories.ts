@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 
-const factories = ['ERC20TransferUniqueNonceValidatorFactory'];
+const factories = ['ERC20UniqueNonceValidatorFactory'];
 
 const func: DeployFunction = async function(hre: HardhatRuntimeEnvironment) {
     const {deployer} = await hre.getNamedAccounts();

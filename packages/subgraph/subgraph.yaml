@@ -3,11 +3,11 @@ schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum
-    name: ERC20TransferUniqueNonceValidatorFactory
+    name: ERC20UniqueNonceValidatorFactory
     network: rinkeby
     source:
-      address: "0xB7D2dA8DE6D55d3Cac6491F5e58e87af0D21F2E6"
-      abi: ERC20TransferUniqueNonceValidatorFactory
+      address: "0x4c6e8825E9c914D512D61E65EBC25431D816212c"
+      abi: ERC20UniqueNonceValidatorFactory
       startBlock: 10061936
     mapping:
       kind: ethereum/events
@@ -16,18 +16,18 @@ dataSources:
       entities:
         - Cloned
       abis:
-        - name: ERC20TransferUniqueNonceValidatorFactory
-          file: ./abis/ERC20TransferUniqueNonceValidatorFactory.json
+        - name: ERC20UniqueNonceValidatorFactory
+          file: ./abis/ERC20UniqueNonceValidatorFactory.json
       eventHandlers:
-        - event: Cloned(indexed address,indexed uint256,address,address,address,address,uint256)
+        - event: Cloned(indexed address,indexed uint256,address,address,address,uint256)
           handler: handleCloned
       file: ./src/mapping.ts
 templates:
   - kind: ethereum
-    name: ERC20TransferUniqueNonceValidator
+    name: ERC20UniqueNonceValidator
     network: rinkeby
     source:
-      abi: ERC20TransferUniqueNonceValidator
+      abi: ERC20UniqueNonceValidator
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -37,8 +37,8 @@ templates:
         - IssuersAdded
         - IssuersRemoved
       abis:
-        - name: ERC20TransferUniqueNonceValidator
-          file: ./abis/ERC20TransferUniqueNonceValidator.json
+        - name: ERC20UniqueNonceValidator
+          file: ./abis/ERC20UniqueNonceValidator.json
       eventHandlers:
         - event: ClaimExecuted(indexed bytes32,indexed address,address,bytes,bytes,bytes)
           handler: handleClaimExecuted
