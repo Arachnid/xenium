@@ -1,5 +1,5 @@
 # Xenium
-Xenium is a noninteractive protocol for producing and redeeming single-use claim codes.
+Xenium is a noninteractive protocol for producing and redeeming single-use claim codes. A pre-draft specification of the protocol is available [here](https://gist.github.com/Arachnid/df9c7e3738ee76bf171c46ef38e4f18b).
 
 What this means in practice is that you can have a device - software or hardware - that produces a (potentially) infinite sequence of unique URLs. Each URL can be used for a single 'claim' - which can have an effect such as transferring a token (ERC20, ERC721, ERC1155...) or anything else you like. Once a claim code is used, it can't be used again, and the protocol is noninteractive - meaning that the device doing the issuing doesn't need two-way communcation with the device and user making the claim.
 
