@@ -16,7 +16,10 @@ export function getNetwork(hostname: string|undefined, query: string|undefined):
             return NETWORKS[networkName];
         }
     }
-    return NETWORKS[query];
+    if(query) {
+        return NETWORKS[query];
+    }
+    return undefined;
 }
 
 export { initMiddleware, factories };

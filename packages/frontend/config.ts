@@ -6,10 +6,12 @@ export interface NetworkInfo {
     chainId: number;
     provider: string;
     subgraph: string;
+    name: string;
 }
 
 export const NETWORKS: {[key: string]: NetworkInfo} = {
     'rinkeby': {
+        name: 'Rinkeby testnet',
         chainId: Rinkeby.chainId,
         provider: `https://rinkeby.infura.io/v3/${INFURA_KEY}`,
         subgraph: 'https://api.thegraph.com/subgraphs/name/arachnid/xeniumrinkeby'
