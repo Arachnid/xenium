@@ -1,14 +1,14 @@
+import { getChainById } from "@usedapp/core";
 import { NextPage } from "next";
-import { useRouter } from "next/router";
+import { useNetwork } from "../lib";
 import { Web3ModalButton } from "./Web3ModalButton";
 
 const Web3Layout : NextPage = ({ children }) => {
-    const router = useRouter();
-    const network = router.query.network;
+    const network = useNetwork();
 
     if(network) {
         return (<>
-            <Web3ModalButton network={router.query.network as string} />
+            <Web3ModalButton network={getChainById(network.chainId)?.chainName as string} />
             {children}
         </>);
     } else {

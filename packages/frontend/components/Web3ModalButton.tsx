@@ -10,7 +10,6 @@ import { NETWORKS } from '../config';
 export const Web3ModalButton = (props: {network: string}) => {
   const { account, activate, deactivate } = useEthers()
   const ens = useLookupAddress()
-  const [showModal, setShowModal] = useState(false)
   const [activateError, setActivateError] = useState('')
   const { error } = useEthers()
   useEffect(() => {

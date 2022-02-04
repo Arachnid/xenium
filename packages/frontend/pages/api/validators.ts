@@ -1,9 +1,8 @@
 import Cors from 'cors';
-import initMiddleware from '../../../lib/init-middleware';
+import initMiddleware from '../../lib/init-middleware';
 import { NextApiRequest, NextApiResponse } from "next"
-import { getChainId } from 'web3modal';
-import { SUBGRAPH_URLS } from '../../../config';
-import { factories } from '../../../lib/factories';
+import { factories } from '../../lib/factories';
+import { getNetwork } from '../../lib';
 
 type Data = {
     address: string,
@@ -27,11 +26,17 @@ query Validators($issuers: [String!]!) {
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Array<Data>>) {
     await cors(req, res);
 
-    const { network, issuer } = req.query;
-    const networkId = getChainId(network as string);
+    const { issuer } = req.query;
+    const network = getNetwork(req.headers.host, req.query.network as string);
+    if(!network) {
+        res.status(404);
+        res.json([]);
+        return;
+    }
+
     const issuers = typeof issuer === 'string' ? [issuer] : issuer;
     const response = await fetch(
-        SUBGRAPH_URLS[networkId],
+        network.subgraph,
         {
             method: 'POST',
             headers: {
@@ -45,11 +50,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         }
     );
     const result = await response.json();
+    console.log([issuers, JSON.stringify(result, undefined, 2)])
     res.json(await Promise.all(result.data.validators.map(async (entry: {factory: string, id: string}) => {
         const factory = factories[entry.factory];
         return {
             address: entry.id,
-            description: await factory.describe(networkId, entry.id),
+            description: await factory.describe(network.chainId, entry.id),
         };
     })));
 }
