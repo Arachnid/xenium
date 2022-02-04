@@ -1,8 +1,8 @@
 import Cors from 'cors';
-import initMiddleware from '../../lib/init-middleware';
+import initMiddleware from '../../../lib/init-middleware';
 import { NextApiRequest, NextApiResponse } from "next"
-import { factories } from '../../lib/factories';
-import { getNetwork } from '../../lib';
+import { factories } from '../../../lib/factories';
+import { NETWORKS } from '../../../config';
 
 type Data = {
     address: string,
@@ -26,12 +26,10 @@ query Validators($issuers: [String!]!) {
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Array<Data>>) {
     await cors(req, res);
 
-    const { issuer } = req.query;
-    const network = getNetwork(req.headers.host, req.query.network as string);
+    const { issuer, network: networkName } = req.query;
+    const network = networkName === undefined ? undefined : NETWORKS[networkName as string];
     if(!network) {
-        res.status(404);
-        res.json([]);
-        return;
+        return res.status(404);
     }
 
     const issuers = typeof issuer === 'string' ? [issuer] : issuer;
@@ -50,7 +48,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         }
     );
     const result = await response.json();
-    console.log([issuers, JSON.stringify(result, undefined, 2)])
     res.json(await Promise.all(result.data.validators.map(async (entry: {factory: string, id: string}) => {
         const factory = factories[entry.factory];
         return {
