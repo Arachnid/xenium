@@ -1,7 +1,7 @@
 import { NextPage } from "next";
 import Head from "next/head";
-import CreateValidator from "../components/CreateValidator";
-import Web3Layout from "../components/Web3Layout";
+import CreateValidator from "../../components/CreateValidator";
+import Web3Layout from "../../components/Web3Layout";
 import styles from '../styles/Home.module.css'
 
 const Configure: NextPage = () => {

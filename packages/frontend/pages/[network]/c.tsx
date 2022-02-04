@@ -1,13 +1,13 @@
 import { NextPage } from 'next'
 import Head from 'next/head'
 import { useEffect, useState } from 'react'
-import styles from '../styles/Home.module.css'
+import styles from '../../styles/Home.module.css'
 import { ClaimCode, buildClaim } from '@xenium-eth/xenium-js';
 import { Button } from 'antd';
 import IValidator_abi from '@xenium-eth/validator/artifacts/contracts/IValidator.sol/IValidator.json';
 import { useContractFunction, useEthers } from '@usedapp/core';
 import { ethers } from 'ethers';
-import Web3Layout from '../components/Web3Layout';
+import Web3Layout from '../../components/Web3Layout';
 
 const DEFAULT_VALIDATOR = "0x0000000000000000000000000000000000000000";
 const IValidator = new ethers.Contract(DEFAULT_VALIDATOR, IValidator_abi.abi);
