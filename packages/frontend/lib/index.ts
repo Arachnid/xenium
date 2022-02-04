@@ -6,7 +6,7 @@ import { NextApiRequest } from 'next';
 
 export function useNetwork(): NetworkInfo|undefined {
     const router = useRouter();
-    return getNetwork(window && window.location.hostname, router.query.network as string);
+    return getNetwork(typeof window === 'undefined' ? undefined : window.location.hostname, router.query.network as string);
 }
 
 export function getNetwork(hostname: string|undefined, query: string|undefined): NetworkInfo|undefined {
