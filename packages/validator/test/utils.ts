@@ -1,9 +1,5 @@
-import { expect } from "chai";
 import { ContractFactory, ContractTransaction } from "ethers";
 
-export function parseMetadata(data: string) {
-    return JSON.parse(data);
-}
 export async function getClone<F extends ContractFactory>(call: Promise<ContractTransaction>, factory: F): Promise<ReturnType<F['attach']>> {
     const tx = await call;
     const receipt = await tx.wait();

@@ -16,6 +16,7 @@
     "@types/node": "^12.20.40",
     "@typescript-eslint/eslint-plugin": "^4.33.0",
     "@typescript-eslint/parser": "^4.33.0",
+    "cbor": "^8.1.0",
     "chai": "^4.3.4",
     "dotenv": "^14.3.2",
     "eslint": "^7.32.0",
@@ -42,7 +43,7 @@
     "@openzeppelin/contracts": "OpenZeppelin/openzeppelin-contracts#master",
     "@xenium-eth/xenium-js": "0.2.0",
     "clones-with-immutable-args": "^1.0.0",
-    "cors": "^2.8.5"
+    "solidity-cborutils": "github:smartcontractkit/solidity-cborutils"
   },
   "scripts": {
     "build": "hardhat compile && tsc",
