@@ -38,13 +38,9 @@ abstract contract ERC20Executor is BaseValidator {
         Buffer.buffer memory buf;
         Buffer.init(buf, 256);
 
-        (address token,, uint256 amount) = tokenInfo(claimData);
+        (address token, uint256 amount) = tokenInfo(claimData);
         string memory symbol = IERC20Metadata(token).symbol();
 
-        buf.startMap();
-        buf.encodeString("valid");
-        buf.encodeInt(1);
-        buf.encodeString("data");
         buf.startMap();
         buf.encodeString("title");
         buf.encodeString(string(abi.encodePacked("$", symbol, " token transfer")));
@@ -54,7 +50,6 @@ abstract contract ERC20Executor is BaseValidator {
         buf.encodeUInt(20);
         buf.encodeString("amount");
         buf.encodeString(amount.toString());
-        buf.endSequence();
         buf.endSequence();
         return buf.buf;
     }

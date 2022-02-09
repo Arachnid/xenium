@@ -48,14 +48,13 @@ export function erc20Executor(getArgs: ()=>Args) {
         });
 
         describe('metadata()', () => {
-            it.only('returns token metadata for a valid claim', async () => {
+            it('returns token metadata for a valid claim', async () => {
                 const cborMetadata = await validator.metadata(issuerAddress, accounts[1].address, issuer.makeClaimCode().data);
                 const metadata = cbor.decodeFirstSync(ethers.utils.arrayify(cborMetadata));
-                expect(metadata.valid).to.equal(1);
-                expect(metadata.data.title).to.equal('$TEST token transfer');
-                expect(metadata.data.tokentype).to.equal(20);
-                expect(metadata.data.token).to.equal(token.address.toLowerCase());
-                expect(metadata.data.amount).to.equal('1');
+                expect(metadata.title).to.equal('$TEST token transfer');
+                expect(metadata.tokentype).to.equal(20);
+                expect(metadata.token).to.equal(token.address.toLowerCase());
+                expect(metadata.amount).to.equal('1');
             });
         });
     });
