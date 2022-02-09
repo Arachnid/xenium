@@ -4,7 +4,6 @@ import { SigningKey } from "ethers/lib/utils";
 import { ethers } from "hardhat";
 import { expect } from "chai";
 import { IssuerWhitelistAuth } from "../typechain/IssuerWhitelistAuth";
-import { parseMetadata } from "./utils";
 
 interface Args {
     validator: IssuerWhitelistAuth;

@@ -6,7 +6,7 @@ import { SigningKey } from "@ethersproject/signing-key";
 import { TestToken } from "../typechain/TestToken";
 import { ERC20UniqueNonceValidator } from "../typechain/ERC20UniqueNonceValidator";
 import { erc20Executor } from "./ERC20Executor.spec";
-import { getClone, parseMetadata } from "./utils";
+import { getClone } from "./utils";
 import { issuerWhitelistAuth } from "./IssuerWhitelistAuth.spec";
 import { uniqueNonceDedup } from "./UniqueNonceDedup.spec";
 import { baseValidator } from "./BaseValidator.spec";

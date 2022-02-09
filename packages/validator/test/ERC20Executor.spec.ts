@@ -5,7 +5,6 @@ import { ERC20Executor } from '../typechain/ERC20Executor';
 import { TestToken } from '../typechain/TestToken';
 import { expect } from "chai";
 import { SigningKey } from '@ethersproject/signing-key';
-import { parseMetadata } from './utils';
 import cbor from "cbor";
 
 interface Args {
@@ -36,6 +35,20 @@ export function erc20Executor(getArgs: ()=>Args) {
                 const tx = await validator.claim(...claim);
                 const receipt = await tx.wait();
                 expect(await token.balanceOf(accounts[1].address)).to.equal(1);
+            });
+
+            it('emits valid metadata in the claim event', async () => {
+                const claim = buildClaim(accounts[1].address, issuer.makeClaimCode());
+                const tx = await validator.claim(...claim);
+                const receipt = await tx.wait();
+                if(receipt.events === undefined) return expect(receipt.events).to.not.be.undefined;
+                expect(receipt.events[0].event).to.equal('ClaimExecuted');
+                if(receipt.events[0].args === undefined) return expect(receipt.events[0].args).to.not.be.undefined;
+                const metadata = cbor.decodeFirstSync(ethers.utils.arrayify(receipt.events[0].args.metadata));
+                expect(metadata.title).to.equal('$TEST token transfer');
+                expect(metadata.tokentype).to.equal(20);
+                expect(metadata.token).to.equal(token.address.toLowerCase());
+                expect(metadata.amount).to.equal('1');
             });
         });
 

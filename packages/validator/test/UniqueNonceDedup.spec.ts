@@ -3,7 +3,6 @@ import { buildClaim, NonceIssuer } from "@xenium-eth/xenium-js";
 import { SigningKey } from "ethers/lib/utils";
 import { ethers } from "hardhat";
 import { expect } from "chai";
-import { parseMetadata } from "./utils";
 import { IssuerWhitelistAuth, UniqueNonceDedup } from "../typechain";
 
 interface Args {

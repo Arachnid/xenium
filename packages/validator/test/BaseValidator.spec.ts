@@ -4,6 +4,7 @@ import { SigningKey } from "ethers/lib/utils";
 import { ethers } from "hardhat";
 import { expect } from "chai";
 import { BaseValidator } from "../typechain";
+import cbor from "cbor";
 
 interface Args {
     validator: BaseValidator;
@@ -49,9 +50,6 @@ export function baseValidator(getArgs: () => Args) {
                 expect(receipt.events[0].args.claimId).to.equal(ethers.utils.keccak256(claim[2]));
                 expect(receipt.events[0].args.issuer).to.equal(issuerAddress);
                 expect(receipt.events[0].args.beneficiary).to.equal(accounts[1].address);
-                expect(receipt.events[0].args.data).to.equal(ethers.utils.hexlify(claim[1]));
-                expect(receipt.events[0].args.authsig).to.equal(ethers.utils.hexlify(claim[2]));
-                expect(receipt.events[0].args.claimsig).to.equal(ethers.utils.hexlify(claim[3]));
             });
         });
     });

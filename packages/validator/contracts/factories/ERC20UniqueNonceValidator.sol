@@ -43,7 +43,7 @@ contract ERC20UniqueNonceValidator is UniqueNonceDedup, IssuerWhitelistAuth, ERC
         return super.claim(beneficiary, data, authsig, claimsig);
     }
 
-    function metadata(address issuer, address claimant, bytes calldata claimData) public override(ERC20Executor, IValidator) virtual view returns(bytes memory) {
+    function metadata(address issuer, address claimant, bytes calldata claimData) public override(ERC20Executor, BaseValidator) virtual view returns(bytes memory) {
         return super.metadata(issuer, claimant, claimData);
     }
 }
