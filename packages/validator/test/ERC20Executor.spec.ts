@@ -47,8 +47,8 @@ export function erc20Executor(getArgs: ()=>Args) {
                 const metadata = cbor.decodeFirstSync(ethers.utils.arrayify(receipt.events[0].args.metadata));
                 expect(metadata.title).to.equal('$TEST token transfer');
                 expect(metadata.tokentype).to.equal(20);
-                expect(metadata.token).to.equal(token.address.toLowerCase());
-                expect(metadata.amount).to.equal('1');
+                expect(ethers.utils.hexlify(metadata.token)).to.equal(token.address.toLowerCase());
+                expect(metadata.amount).to.equal(1);
             });
         });
 
@@ -66,8 +66,8 @@ export function erc20Executor(getArgs: ()=>Args) {
                 const metadata = cbor.decodeFirstSync(ethers.utils.arrayify(cborMetadata));
                 expect(metadata.title).to.equal('$TEST token transfer');
                 expect(metadata.tokentype).to.equal(20);
-                expect(metadata.token).to.equal(token.address.toLowerCase());
-                expect(metadata.amount).to.equal('1');
+                expect(ethers.utils.hexlify(metadata.token)).to.equal(token.address.toLowerCase());
+                expect(metadata.amount).to.equal(1);
             });
         });
     });
