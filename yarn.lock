@@ -1029,10 +1029,12 @@
   resolved "https://registry.yarnpkg.com/@emotion/unitless/-/unitless-0.7.5.tgz#77211291c1900a700b8a78cfafda3160d76949ed"
   integrity sha512-OWORNpfjMsSSUBVrRBVGECkhWcULOAJz9ZW8uK9qgxD+87M7jHRcvh/A96XXNhXTLmKcoYSQtBEX7lHMO7YRwg==
 
-"@ensdomains/buffer@0.0.10":
-  version "0.0.10"
-  resolved "https://registry.yarnpkg.com/@ensdomains/buffer/-/buffer-0.0.10.tgz#3b9f8b6a34c6160ae8a8cb8f0f033aa35c1a9970"
-  integrity sha512-EOFqiWnN36EyyBAgHFTsabFcFICUALt41SiDm/4pAw4V36R4lD4wHcnZcqCYki9m1fMaeWGHrdqxmrMa8iiSTQ==
+"@ensdomains/buffer@0.0.13":
+  version "0.0.13"
+  resolved "https://registry.yarnpkg.com/@ensdomains/buffer/-/buffer-0.0.13.tgz#b9f60defb78fc5f2bee30faca17e63dfbef19253"
+  integrity sha512-8aA+U/e4S54ebPwcge1HHvvpgXLKxPd6EOSegMlrTvBnKB8RwB3OpNyflaikD6KqzIwDaBaH8bvnTrMcfpV7oQ==
+  dependencies:
+    "@nomiclabs/hardhat-truffle5" "^2.0.0"
 
 "@ensdomains/ens@^0.4.4":
   version "0.4.5"
@@ -14533,12 +14535,11 @@ solhint@^3.3.6:
   optionalDependencies:
     prettier "^1.14.3"
 
-solidity-cborutils@^1.0.7:
+"solidity-cborutils@github:smartcontractkit/solidity-cborutils":
   version "1.0.7"
-  resolved "https://registry.yarnpkg.com/solidity-cborutils/-/solidity-cborutils-1.0.7.tgz#de2655a08d7cc157e7090c53ba8e2ea89218f8fe"
-  integrity sha512-UYMETFyyT+V4sHcPngn+omWnGd5LzzwRtLYOzPEiLuciaDoUTY/C4rN31ojBOqo1nWA8bzlqdbsrl3UOzE8hGQ==
+  resolved "https://codeload.github.com/smartcontractkit/solidity-cborutils/tar.gz/04e8a8be853feb7dac5764842c6ff0ade3e7cd1c"
   dependencies:
-    "@ensdomains/buffer" "0.0.10"
+    "@ensdomains/buffer" "0.0.13"
     "@nomiclabs/hardhat-truffle5" "^2.0.0"
     "@nomiclabs/hardhat-web3" "^2.0.0"
     hardhat "^2.0.6"
