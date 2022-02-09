@@ -27,7 +27,5 @@ type Claim @entity {
   validator: Validator!
   issuer: Issuer!
   beneficiary: Bytes!
-  data: Bytes!
-  authsig: Bytes!
-  claimsig: Bytes!
+  metadata: Bytes!
 }

@@ -6,7 +6,7 @@ dataSources:
     name: ERC20UniqueNonceValidatorFactory
     network: rinkeby
     source:
-      address: "0x4c6e8825E9c914D512D61E65EBC25431D816212c"
+      address: "0xa189bD49b29630469452329b7c70FEd8974E0DF0"
       abi: ERC20UniqueNonceValidatorFactory
       startBlock: 10061936
     mapping:
@@ -40,7 +40,7 @@ templates:
         - name: ERC20UniqueNonceValidator
           file: ./abis/ERC20UniqueNonceValidator.json
       eventHandlers:
-        - event: ClaimExecuted(indexed bytes32,indexed address,address,bytes,bytes,bytes)
+        - event: ClaimExecuted(indexed bytes32,indexed address,address,bytes)
           handler: handleClaimExecuted
         - event: IssuersAdded(address[])
           handler: handleIssuersAdded

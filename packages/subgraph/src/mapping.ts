@@ -57,8 +57,6 @@ export function handleClaimExecuted(event: ClaimExecuted): void {
   entity.validator = event.address.toHex();
   entity.issuer = issuer.id;
   entity.beneficiary = event.params.beneficiary;
-  entity.data = event.params.data;
-  entity.authsig = event.params.authsig;
-  entity.claimsig = event.params.claimsig;
+  entity.metadata = event.params.metadata;
   entity.save();
 }
