@@ -5,7 +5,6 @@ import "../BaseValidator.sol";
 import "@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/contracts/utils/Base64.sol";
-import "@openzeppelin/contracts/contracts/utils/Strings.sol";
 import "@ensdomains/buffer/contracts/Buffer.sol";
 import "solidity-cborutils/contracts/CBOR.sol";
 
@@ -13,7 +12,6 @@ import "solidity-cborutils/contracts/CBOR.sol";
  * @dev A Validator mixin that sends ERC20 tokens from an allowance.
  */
 abstract contract ERC20Executor is BaseValidator {
-    using Strings for uint256;
     using CBOR for Buffer.buffer;
 
     function tokenInfo(bytes calldata data) public virtual view returns(address token, uint256 amount);
