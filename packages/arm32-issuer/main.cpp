@@ -64,7 +64,7 @@ uint8_t ROOT_OF_TRUST[] = {0x5b, 0x22, 0x26, 0xba, 0x20, 0x3d, 0x95, 0x1e, 0xfb,
 #define MLEN 32 // 32 * 8 byte words (256 bytes)
 #define CONFIG_ADDRESS 0x1A0
 #define ACTIVE_TIMEOUT chrono::duration<uint32_t,std::milli>(1000) // milliseconds to wait after tag becomes active before starting a new write
-
+#define CLAIM_PATH "c#"
 #define FLAG_GPO_INTERRUPT 0x1
 #define FLAGS_ALL FLAG_GPO_INTERRUPT
 
@@ -81,7 +81,7 @@ const config_t DEFAULT_CONFIG = {
     "XENI001",
     {134, 171, 197, 31, 186, 241, 52, 24, 170, 185, 255, 241, 178, 77, 154, 85, 123, 49, 220, 185},
     {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    "\x04xenium.link/mainnet/c#",
+    "\x04xenium.link/mainnet/",
     1,
     1
 };
@@ -103,8 +103,8 @@ uint8_t EEPROM_REGISTER_INIT[][2] = {
 
 int write_claim_code(void);
 
-InterruptIn gpo(D12, PullUp);
-ST25 st25(D14, D15);
+InterruptIn gpo(PA_6, PullUp);
+ST25 st25(PB_9, PB_8);
 EventFlags event_flags;
 
 privkey_t issuer_key;
@@ -127,7 +127,7 @@ int write_config() {
 
 int write_claim_code(void) {
     int urllen = strnlen(config.url_string, sizeof(config.url_string));
-    char claimcode[CLAIMCODE_LEN + urllen];
+    char claimcode[CLAIMCODE_LEN + urllen + sizeof(CLAIM_PATH)];
     uint32_t nonce;
 
     int ret = get_next_nonce(&nonce);
@@ -135,8 +135,9 @@ int write_claim_code(void) {
         return ret;
     }
 
-    memcpy(claimcode, config.url_string, urllen);
-    ret = generate_claim_code(issuer_key, config.validator, nonce, claimcode + urllen);
+    strncat(claimcode, config.url_string, urllen);
+    strcat(claimcode, CLAIM_PATH);
+    ret = generate_claim_code(issuer_key, config.validator, nonce, claimcode + urllen + sizeof(CLAIM_PATH));
     if(ret != MBED_SUCCESS) {
         return ret;
     }

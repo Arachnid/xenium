@@ -1,0 +1,6 @@
+{
+    "XENIUM_PROTOTYPE": {
+        "inherits": ["MCU_STM32F411xE"],
+        "device_name": "STM32F411CE"
+    }
+}
