@@ -1,4 +1,4 @@
-import { TableContainer, TableRow, TableCell, TableBody, Typography } from "@mui/material";
+import { TableContainer, TableRow, TableCell, TableBody, Typography, Table, CircularProgress } from "@mui/material";
 import { ReactElement } from "react";
 
 export interface Property {
@@ -16,16 +16,21 @@ const PropertiesCard = (props: Props) => {
     if(!properties || properties.length == 0 && !loading) {
         return <Typography variant="body1">No metadata available.</Typography>
     }
+    if(loading) {
+        return <CircularProgress />;
+    }
     return (
         <TableContainer>
-            <TableBody>
-                {properties.map((property) => (
-                    <TableRow>
-                        <TableCell component="th" scope="row">{property.name}</TableCell>
-                        <TableCell>{property.value}</TableCell>
-                    </TableRow>
-                ))}
-            </TableBody>
+            <Table>
+                <TableBody>
+                    {properties.map((property) => (
+                        <TableRow key={property.name}>
+                            <TableCell component="th" scope="row">{property.name}</TableCell>
+                            <TableCell>{property.value}</TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
         </TableContainer>
     );
 }

@@ -3,20 +3,15 @@ import Head from 'next/head'
 import styles from '../../styles/Home.module.css'
 import { ClaimCode } from '@xenium-eth/xenium-js';
 import { useRouter } from 'next/router';
-import { ClaimMetadata } from '../../lib';
+import { ClaimMetadata, useNetwork } from '../../lib';
 import { NetworkInfo } from '../../config';
-import { useCall, useContractFunction } from '@usedapp/core';
+import { useCall, useContractFunction, useNetwork as useConnectedNetwork } from '@usedapp/core';
 import { ethers } from 'ethers';
 import { Alert, AlertTitle, Box, CircularProgress, Grid, Paper, Typography } from '@mui/material';
 import UnknownClaimInfo from '../../components/claims/UnknownClaimInfo';
 import cbor from 'cbor';
-import * as IValidator_abi from '@xenium-eth/validator/artifacts/contracts/IValidator.sol/IValidator.json';
+import IValidator_abi from '@xenium-eth/validator/artifacts/contracts/IValidator.sol/IValidator.json';
 import ERC20ClaimInfo from '../../components/claims/ERC20ClaimInfo';
-
-interface ClaimContainerProps {
-  claimCode: ClaimCode;
-  network: NetworkInfo;
-}
 
 const Container = (props: {name: string, children: JSX.Element}) => {
   return (<div className={styles.container}>
@@ -72,6 +67,17 @@ const InvalidMetadata = () => {
   </Container>);
 }
 
+const WrongNetwork = (props: {network: NetworkInfo}) => {
+  return (<Container name="Wrong Network">
+    <Grid item xs={12}>
+      <Alert severity="error">
+        <AlertTitle>Wrong Network</AlertTitle>
+        Please connect to the {props.network.name} network to continue.
+      </Alert>
+    </Grid>
+  </Container>)
+}
+
 const MetadataLoading = () => {
   return (<Container name="...">
     <Grid item xs={12}>
@@ -84,12 +90,18 @@ const ClaimElement = (props: {claimCode: ClaimCode}) => {
   const { claimCode } = props;
   const validator = new ethers.Contract(claimCode.validator, IValidator_abi.abi);
   const { send } = useContractFunction(validator, 'claim');
+  const expectedNetwork = useNetwork();
+  const { network } = useConnectedNetwork();
 
   const encodedMetadata = useCall(claimCode && {
     contract: validator,
     method: 'metadata',
     args: [claimCode?.issuer, claimCode?.validator, claimCode?.data]
   });
+
+  if(expectedNetwork !== undefined && network.chainId !== undefined && expectedNetwork?.chainId !== network.chainId) {
+    return <WrongNetwork network={expectedNetwork} />;
+  }
 
   if(encodedMetadata && !encodedMetadata.value) {
     return <InvalidMetadata />;
