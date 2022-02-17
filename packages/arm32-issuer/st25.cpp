@@ -38,7 +38,7 @@ int ST25::format(uint16_t mlen, bool readonly, bool mbread) {
 }
 
 int ST25::read(uint8_t *data, uint16_t len, uint16_t addr) {
-    return read(data, len, addr, ADDRESS_REGISTERS);
+    return read(data, len, addr, ADDRESS_USER_MEM);
 }
 
 int ST25::read_register(uint16_t addr) {

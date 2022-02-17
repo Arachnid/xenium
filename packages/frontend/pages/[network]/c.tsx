@@ -1,58 +1,152 @@
 import { NextPage } from 'next'
 import Head from 'next/head'
-import { useEffect, useState } from 'react'
 import styles from '../../styles/Home.module.css'
-import { ClaimCode, buildClaim } from '@xenium-eth/xenium-js';
-import { Button } from 'antd';
-import IValidator_abi from '@xenium-eth/validator/artifacts/contracts/IValidator.sol/IValidator.json';
-import { useContractFunction, useEthers } from '@usedapp/core';
+import { ClaimCode } from '@xenium-eth/xenium-js';
+import { useRouter } from 'next/router';
+import { ClaimMetadata } from '../../lib';
+import { NetworkInfo } from '../../config';
+import { useCall, useContractFunction } from '@usedapp/core';
 import { ethers } from 'ethers';
-import Web3Layout from '../../components/Web3Layout';
+import { Alert, AlertTitle, Box, CircularProgress, Grid, Paper, Typography } from '@mui/material';
+import UnknownClaimInfo from '../../components/claims/UnknownClaimInfo';
+import cbor from 'cbor';
+import * as IValidator_abi from '@xenium-eth/validator/artifacts/contracts/IValidator.sol/IValidator.json';
+import ERC20ClaimInfo from '../../components/claims/ERC20ClaimInfo';
 
-const DEFAULT_VALIDATOR = "0x0000000000000000000000000000000000000000";
-const IValidator = new ethers.Contract(DEFAULT_VALIDATOR, IValidator_abi.abi);
+interface ClaimContainerProps {
+  claimCode: ClaimCode;
+  network: NetworkInfo;
+}
+
+const Container = (props: {name: string, children: JSX.Element}) => {
+  return (<div className={styles.container}>
+    <Head>
+      <title>{props.name}</title>
+      <link rel="icon" href="/favicon.ico" />
+    </Head>
+    <main className={styles.main}>
+      <Box sx={{ maxWidth: 'md' }}>
+        <Grid container rowSpacing={5}>
+          <Grid item xs={12}>
+            <Typography variant="h1">
+              {props.name}
+            </Typography>
+          </Grid>
+          {props.children}
+        </Grid>
+      </Box>
+    </main>
+  </div>);
+}
+
+const UnknownNetwork = () => {
+  return (<Container name="Unknown Network">
+    <Grid item xs={12}>
+      <Alert severity="error">
+        <AlertTitle>Error</AlertTitle>
+        This claim URL specified a network that we do not recognise.
+      </Alert>
+    </Grid>
+  </Container>);
+}
+
+const InvalidClaimCode = () => {
+  return (<Container name="Invalid Claim Code">
+    <Grid item xs={12}>
+      <Alert severity="error">
+        <AlertTitle>Error</AlertTitle>
+        The provided claim code is missing or invalid.
+      </Alert>
+    </Grid>
+  </Container>);
+}
+
+const InvalidMetadata = () => {
+  return (<Container name="Invalid Metadata">
+    <Grid item xs={12}>
+      <Alert severity="error">
+        <AlertTitle>Error</AlertTitle>
+        The validator contract responded with metadata we could not parse.
+      </Alert>
+    </Grid>
+  </Container>);
+}
+
+const MetadataLoading = () => {
+  return (<Container name="...">
+    <Grid item xs={12}>
+      <CircularProgress />
+    </Grid>
+  </Container>);
+}
+
+const ClaimElement = (props: {claimCode: ClaimCode}) => {
+  const { claimCode } = props;
+  const validator = new ethers.Contract(claimCode.validator, IValidator_abi.abi);
+  const { send } = useContractFunction(validator, 'claim');
+
+  const encodedMetadata = useCall(claimCode && {
+    contract: validator,
+    method: 'metadata',
+    args: [claimCode?.issuer, claimCode?.validator, claimCode?.data]
+  });
+
+  if(encodedMetadata && !encodedMetadata.value) {
+    return <InvalidMetadata />;
+  }
+
+  let metadata: ClaimMetadata | undefined;
+  try {
+    metadata = encodedMetadata ? cbor.decodeFirstSync(ethers.utils.arrayify(encodedMetadata.value[0])) : undefined;
+  } catch (e) {
+    return <InvalidMetadata />;
+  }
+
+  if(metadata) {
+    metadata.claimtype = metadata?.claimtype || ("ERC" + (metadata as any)?.tokentype);
+  }
+  return (
+    <Container name={metadata ? (metadata.title || "Unknown Claim") : "..."}><>
+      {metadata && metadata.description && <Grid item xs={12}>{metadata.description}</Grid>}
+      <Grid item xs={12}>
+        <Alert severity="warning">
+          Metadata is self-reported by the contract and may not be accurate.
+        </Alert>
+      </Grid>
+      <Grid item xs={12}>
+        <Paper sx={{padding: (theme) => theme.spacing(2)}}>
+          {(() => {
+            switch(metadata?.claimtype) {
+            case undefined:
+              return <CircularProgress />;
+            case 'ERC20':
+              return <ERC20ClaimInfo claimCode={claimCode} validator={validator} metadata={metadata!} />
+            default:
+              return <UnknownClaimInfo claimCode={claimCode} validator={validator} metadata={metadata!} />
+            }
+          })()}
+        </Paper>
+      </Grid>
+    </></Container>
+  );
+};
 
 const Home: NextPage = () => {
-  const [claimCode, setClaimCode] = useState<ClaimCode|undefined>(undefined);
-  const { account } = useEthers();
-  const { send } = useContractFunction(IValidator.attach(claimCode?.validator || DEFAULT_VALIDATOR), 'claim');
+  const router = useRouter();
 
-  useEffect(() => {
-    try {
-      setClaimCode(ClaimCode.fromString(window.location.hash.slice(1)));
-    } catch(e) {
-      console.log(e);
-    }
-  }, []);
-
-  function makeClaim() {
-    const claim = buildClaim(account as string, claimCode as ClaimCode);
-    send(...claim);
+  const hash = router.asPath.match(/#[A-Z0-9]+/gi);
+  if(!hash) {
+    return <InvalidClaimCode />;
   }
 
-  let content: JSX.Element;
-  if(claimCode === undefined) {
-    content = <div>Invalid claim code</div>;
-  } else {
-    content = <Button type="primary" onClick={makeClaim}>Claim</Button>;
+  let claimCode: ClaimCode;
+  try {
+    claimCode = ClaimCode.fromString(hash[0].slice(1));
+  } catch (e) {
+    return <InvalidClaimCode />;
   }
 
-  return (
-    <div className={styles.container}>
-      <Head>
-        <title>Xenium Token Claim</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-      <Web3Layout>
-        <main className={styles.main}>
-          <h1 className={styles.title}>
-            Token Claim
-          </h1>
-          {content}
-        </main>
-      </Web3Layout>
-    </div>
-  )
+  return <ClaimElement claimCode={claimCode} />;
 }
 
 export default Home

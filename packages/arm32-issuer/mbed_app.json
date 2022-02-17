@@ -1,12 +1,19 @@
 {
     "target_overrides": {
-        "NUCLEO_L443RC_P": {
-            "target.clock_source": "USE_PLL_MSI",
-            "storage.storage_type": "TDB_INTERNAL",
-            "storage_tdb_internal.internal_size": "0x1000"
+        "NUCLEO_L433RC_P": {
+            "app.scl": "ARDUINO_UNO_D15",
+            "app.sda": "ARDUINO_UNO_D14",
+            "app.int": "ARDUINO_UNO_D12"
         },
         "NUCLEO_F401RE": {
-
+            "app.scl": "PB_8",
+            "app.sda": "PB_9",
+            "app.int": "PA_6"
+        },
+        "XENIUM_PROTOTYPE": {
+            "app.scl": "PB_8",
+            "app.sda": "PB_9",
+            "app.int": "PA_6"
         },
         "*": {
             "target.components_add": ["FLASHIAP"],
@@ -14,5 +21,19 @@
             "rtos.main-thread-stack-size": 8192
         }
     },
-    "macros": ["uECC_CURVE=uECC_secp256k1"]
+    "macros": ["uECC_CURVE=uECC_secp256k1"],
+    "config": {
+        "scl": {
+            "help": "SCL pin name",
+            "required": true
+        },
+        "sda": {
+            "help": "SDA pin name",
+            "required": true
+        },
+        "int": {
+            "help": "ST25 interrupt pin name",
+            "required": true
+        }
+    }
 }

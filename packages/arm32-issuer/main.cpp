@@ -78,8 +78,8 @@ typedef struct {
 } config_t;
 
 const config_t DEFAULT_CONFIG = {
-    "XENI001",
-    {134, 171, 197, 31, 186, 241, 52, 24, 170, 185, 255, 241, 178, 77, 154, 85, 123, 49, 220, 185},
+    "XENI003",
+    {0xf2, 0x1a, 0x71, 0xd2, 0x67, 0x5d, 0xa8, 0x3e, 0xd2, 0xda, 0x08, 0x38, 0x17, 0x21, 0x4b, 0x81, 0x5f, 0x09, 0xb1, 0x3b},
     {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
     "\x04xenium.link/mainnet/",
     1,
@@ -103,8 +103,8 @@ uint8_t EEPROM_REGISTER_INIT[][2] = {
 
 int write_claim_code(void);
 
-InterruptIn gpo(PA_6, PullUp);
-ST25 st25(PB_9, PB_8);
+InterruptIn gpo(MBED_CONF_APP_INT, PullUp);
+ST25 st25(MBED_CONF_APP_SDA, MBED_CONF_APP_SCL);
 EventFlags event_flags;
 
 privkey_t issuer_key;
@@ -137,7 +137,7 @@ int write_claim_code(void) {
 
     strncat(claimcode, config.url_string, urllen);
     strcat(claimcode, CLAIM_PATH);
-    ret = generate_claim_code(issuer_key, config.validator, nonce, claimcode + urllen + sizeof(CLAIM_PATH));
+    ret = generate_claim_code(issuer_key, config.validator, nonce, claimcode + urllen + sizeof(CLAIM_PATH) - 1);
     if(ret != MBED_SUCCESS) {
         return ret;
     }
@@ -193,12 +193,6 @@ void initialize_device() {
         // Initialise with default config
         memcpy((uint8_t*)&config, &DEFAULT_CONFIG, sizeof(DEFAULT_CONFIG));
 
-        // Set up devicekey
-        ret = DeviceKey::get_instance().device_inject_root_of_trust((uint32_t*)ROOT_OF_TRUST, sizeof(ROOT_OF_TRUST));
-        if(ret != 0) {
-            MBED_ERROR(ret, "Setting root of trust");
-        }
-
         // Format the NDEF part of the memory
         ret = st25.format(MLEN, true /* readonly */, true /* mbread */);
         if(ret != 0) {
@@ -245,10 +239,13 @@ void initialize_device() {
         }
     }
 
+    // Set up devicekey
+    DeviceKey::get_instance().device_inject_root_of_trust((uint32_t*)ROOT_OF_TRUST, sizeof(ROOT_OF_TRUST));
+
     // Write the issuer address to the config
     ret = get_issuer_address(config.issuer);
     if(ret != MBED_SUCCESS) {
-        MBED_ERROR(ret, "Resetting datastore");
+        MBED_ERROR(ret, "Writing issuer address");
     }
 
     // Write the config to storage

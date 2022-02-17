@@ -42,10 +42,10 @@ abstract contract ERC20Executor is BaseValidator {
         buf.startMap();
         buf.encodeString("title");
         buf.encodeString(string(abi.encodePacked("$", symbol, " token transfer")));
-        buf.encodeString("token");
+        buf.encodeString("claimtype");
+        buf.encodeString("ERC20");
+        buf.encodeString("resource");
         buf.encodeBytes(abi.encodePacked(token));
-        buf.encodeString("tokentype");
-        buf.encodeUInt(20);
         buf.encodeString("amount");
         buf.encodeUInt(amount);
         buf.endSequence();
