@@ -8,7 +8,7 @@ const Web3Layout : NextPage = ({ children }) => {
 
     if(network) {
         return (<>
-            <Web3ModalButton network={network} buttonType="primary" message="Connect" />
+            <Web3ModalButton network={network} message="Connect" />
             {children}
         </>);
     } else {
