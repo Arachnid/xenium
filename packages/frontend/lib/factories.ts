@@ -8,7 +8,7 @@ export interface Factory {
 
 export const factories: {[address: string]: Factory} = {
     // ERC20UniqueNonceValidatorFactory
-    "0x4c6e8825e9c914d512d61e65ebc25431d816212c": {
+    "0xa189bd49b29630469452329b7c70fed8974e0df0": {
         describe: async (network, address) => {
             const provider = new ethers.providers.InfuraProvider(network, INFURA_KEY);
             const validator = ERC20UniqueNonceValidator__factory.connect(address, provider);
